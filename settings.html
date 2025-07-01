@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置中心 - 聆心小开</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --nankai-purple: #6B238E;
+            --nankai-light: #9B4DCA;
+            --nankai-dark: #4A1B6D;
+            --nankai-accent: #F3E9FC;
+        }
+
+        body {
+            background: linear-gradient(to bottom right, #fff, var(--nankai-accent));
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        .settings-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .settings-header {
+            background: linear-gradient(45deg, var(--nankai-purple), var(--nankai-light));
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .settings-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .settings-content {
+            padding: 2rem;
+        }
+
+        .settings-section {
+            margin-bottom: 2rem;
+        }
+
+        .settings-section-title {
+            color: var(--nankai-purple);
+            font-weight: bold;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--nankai-accent);
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .settings-item:hover {
+            background-color: var(--nankai-accent);
+        }
+
+        .settings-item i {
+            width: 30px;
+            color: var(--nankai-purple);
+        }
+
+        .settings-item-content {
+            flex: 1;
+        }
+
+        .settings-item-label {
+            font-weight: 500;
+            color: var(--nankai-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .settings-item-description {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .form-switch {
+            padding-left: 0;
+        }
+
+        .form-switch .form-check-input {
+            margin-left: 0;
+            margin-right: 0.5rem;
+        }
+
+        .btn-save {
+            background: var(--nankai-purple);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            background: var(--nankai-light);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <div class="settings-header">
+            <h1 class="settings-title">设置</h1>
+        </div>
+        
+        <div class="settings-content">
+            <form id="settingsForm">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">通知设置</h3>
+                    <div class="settings-item">
+                        <i class="fas fa-bell"></i>
+                        <div class="settings-item-content">
+                            <div class="settings-item-label">消息通知</div>
+                            <div class="settings-item-description">接收新消息和系统通知</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifications" checked>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <i class="fas fa-envelope"></i>
+                        <div class="settings-item-content">
+                            <div class="settings-item-label">邮件通知</div>
+                            <div class="settings-item-description">接收重要更新和活动通知</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="emailNotifications">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="settings-section-title">隐私设置</h3>
+                    <div class="settings-item">
+                        <i class="fas fa-user-shield"></i>
+                        <div class="settings-item-content">
+                            <div class="settings-item-label">显示在线状态</div>
+                            <div class="settings-item-description">允许其他用户看到你的在线状态</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="onlineStatus" checked>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <i class="fas fa-history"></i>
+                        <div class="settings-item-content">
+                            <div class="settings-item-label">保存聊天记录</div>
+                            <div class="settings-item-description">自动保存与AI助手的对话记录</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="saveChatHistory" checked>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="settings-section-title">界面设置</h3>
+                    <div class="settings-item">
+                        <i class="fas fa-moon"></i>
+                        <div class="settings-item-content">
+                            <div class="settings-item-label">深色模式</div>
+                            <div class="settings-item-description">切换到深色主题界面</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="darkMode">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-save">
+                        <i class="fas fa-save me-2"></i>保存设置
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('settingsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // 这里添加保存设置的逻辑
+            alert('设置已保存！');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>南开智能体 - AI Matrix</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.6/libs/cn/index.js"></script>
+  <style>
+    :root {
+      --nankai-purple: #6B238E;
+      --nankai-light: #9B4DCA;
+      --nankai-dark: #4A1B6D;
+      --nankai-accent: #E6D5F0;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--nankai-accent) 0%, #ffffff 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://www.sj51.net/wp-content/uploads/2023/03/2023031312225082.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 30%;
+      opacity: 0.05;
+      z-index: -1;
+    }
+
+    .custom-navbar {
+      background: linear-gradient(90deg, var(--nankai-purple), var(--nankai-light));
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .custom-navbar .nav-link {
+      color: white !important;
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+      transition: background-color 0.3s ease;
+      font-size: 1.2rem;
+    }
+
+    .custom-navbar .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .header h1 {
+      color: var(--nankai-purple);
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+      display: inline-block;
+      cursor: default;
+    }
+
+    .header h1::before {
+      content: '聆心小开';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, var(--nankai-purple), var(--nankai-light));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .header h1:hover::before {
+      opacity: 1;
+    }
+
+    .header p {
+      color: var(--nankai-dark);
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    .cat-mascot {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 2rem;
+      background: url('C:\ai_website\static\avatar.jpg') no-repeat center;
+      background-size: contain;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .cat-decoration {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      opacity: 0.6;
+    }
+
+    .cat-top-left {
+      top: 10%;
+      left: 5%;
+      background-image: url('https://www.nankai.edu.cn/_sources/images/cat-sleeping.png');
+      transform: rotate(-15deg);
+    }
+
+    .cat-top-right {
+      top: 15%;
+      right: 5%;
+      background-image: url('https://www.nankai.edu.cn/_sources/images/cat-playing.png');
+      transform: rotate(15deg);
+    }
+
+    .cat-bottom-left {
+      bottom: 10%;
+      left: 5%;
+      background-image: url('https://www.nankai.edu.cn/_sources/images/cat-reading.png');
+      transform: rotate(-15deg);
+    }
+
+    .cat-bottom-right {
+      bottom: 15%;
+      right: 5%;
+      background-image: url('https://www.nankai.edu.cn/_sources/images/cat-walking.png');
+      transform: rotate(15deg);
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+      border: none;
+      box-shadow: 0 10px 30px rgba(107, 35, 142, 0.1);
+      transition: transform 0.3s ease;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-body {
+      padding: 2rem;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      border: none;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, var(--nankai-purple), var(--nankai-light));
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                                var(--nankai-light) 0%, 
+                                var(--nankai-purple) 100%);
+      opacity: 0;
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn:hover::after {
+      opacity: 1;
+    }
+
+    .btn-primary {
+      background: transparent;
+    }
+
+    .btn-secondary {
+      background: transparent;
+    }
+
+    .btn-primary::before {
+      background: linear-gradient(45deg, var(--nankai-purple), var(--nankai-light));
+    }
+
+    .btn-secondary::before {
+      background: linear-gradient(45deg, #7C3AED, var(--nankai-purple));
+    }
+
+    .btn-primary::after {
+      background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                                var(--nankai-light) 0%, 
+                                var(--nankai-purple) 100%);
+    }
+
+    .btn-secondary::after {
+      background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                                #7C3AED 0%, 
+                                var(--nankai-purple) 100%);
+    }
+
+    .agent-avatar {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 5px 15px rgba(107, 35, 142, 0.2);
+      border: 3px solid var(--nankai-accent);
+      transition: transform 0.3s ease;
+      overflow: hidden;
+    }
+
+    .agent-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .agent-avatar:hover {
+      transform: scale(1.05);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--nankai-dark);
+      font-size: 0.9rem;
+    }
+
+    #backToTop {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 999;
+      background: var(--nankai-purple);
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 50px;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      display: none;
+      transition: opacity 0.3s ease;
+    }
+
+    #backToTop:hover {
+      background: var(--nankai-dark);
+    }
+
+    .dropdown-menu {
+      background: rgba(255, 255, 255, 0.95);
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      padding: 0.5rem;
+    }
+
+    .dropdown-item {
+      color: var(--nankai-dark);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--nankai-accent);
+      color: var(--nankai-purple);
+    }
+
+    .social-login {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .social-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .social-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .feishu-btn {
+      background-color: #3370FF;
+    }
+
+    .wechat-btn {
+      background-color: #07C160;
+    }
+
+    .qq-btn {
+      background-color: #12B7F5;
+    }
+
+    /* 添加设置相关样式 */
+    .settings-badge {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: var(--nankai-light);
+      border-radius: 50%;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .dropdown-item.settings-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dropdown-item.settings-link:hover {
+      background-color: var(--nankai-accent);
+    }
+
+    .navbar-brand img,
+    .navbar-brand img:first-child,
+    .navbar-brand img:last-child {
+      height: 60px !important;
+      width: 165px !important;
+      object-fit: cover !important;
+      object-position: left !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      overflow: hidden !important;
+      background: none !important;
+    }
+
+    .navbar-brand {
+      font-size: 1.4rem;
+    }
+
+    /* 自定义悬停提示框样式 */
+    .custom-tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .custom-tooltip .tooltip-text {
+      visibility: hidden;
+      width: 400px;
+      background-color: rgba(255, 255, 255, 0.95);
+      color: var(--nankai-dark);
+      text-align: center;
+      border-radius: 15px;
+      padding: 15px;
+      position: absolute;
+      z-index: 1;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      box-shadow: 0 5px 15px rgba(107, 35, 142, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(107, 35, 142, 0.1);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      pointer-events: none;
+    }
+
+    .custom-tooltip:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top custom-navbar">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">
+        <img src="https://my.nankai.edu.cn/_upload/tpl/00/01/1/template1/images/logo.png" alt="南开大学" height="60" class="d-inline-block align-text-top me-2">
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              用户
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>个人中心</a></li>
+              <li>
+                <a class="dropdown-item settings-link" href="settings.html">
+                  <span><i class="fas fa-cog me-2"></i>设置中心</span>
+                  <span class="settings-badge" id="settingsBadge" style="display: none;"></span>
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>退出登录</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 返回顶部按钮 -->
+  <button id="backToTop"><i class="fas fa-arrow-up"></i></button>
+
+  <!-- 背景装饰 -->
+  <div class="cat-decoration cat-top-left"></div>
+  <div class="cat-decoration cat-top-right"></div>
+  <div class="cat-decoration cat-bottom-left"></div>
+  <div class="cat-decoration cat-bottom-right"></div>
+
+  <!-- 主体内容 -->
+  <div class="container" style="padding-top: 60px;">
+    <div class="header">
+      <div class="cat-mascot"></div>
+      <h1>聆心小开</h1>
+      <p>您的AI助手，随时为您服务</p>
+    </div>
+
+    <div class="card" id="chatspace">
+      <div class="card-body">
+        <h3 class="text-center mb-5">心理聊愈空间</h3>
+        <div class="custom-tooltip" style="width: 100%;">
+          <a href="index（心理科普）.html" class="btn btn-primary" style="width: 100%;">
+            <i class="fas fa-robot"></i> 解惑助手
+          </a>
+          <span class="tooltip-text">我是您的心理科普助手，可以为您解答各类心理健康问题，提供专业的心理知识科普，帮助您更好地了解自己和他人。</span>
+        </div>
+        <div class="custom-tooltip" style="width: 100%;">
+          <a href="15.html" class="btn btn-secondary" style="width: 100%;">
+            <i class="fas fa-comments"></i> 倾诉空间
+          </a>
+          <span class="tooltip-text">我是您的心理倾诉伙伴，在这里您可以畅所欲言，分享您的喜怒哀乐。我会认真倾听，给予温暖的回应和支持。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增：应用下载卡片 -->
+    <div class="card" id="downloadspace">
+      <div class="card-body">
+        <h3 class="text-center mb-5">移动应用下载</h3>
+        <div class="custom-tooltip" style="width: 100%;">
+          <a href="./聆心小开.apk" class="btn btn-primary" style="width: 100%;" download="聆心小开.apk">
+            <i class="fas fa-download"></i> 下载聆心小开 APP
+          </a>
+          <span class="tooltip-text">下载聆心小开移动应用，随时随地享受心理健康服务，支持离线使用和个性化设置。</span>
+        </div>
+        <div class="text-center mt-3">
+          <small class="text-muted">
+            <i class="fas fa-mobile-alt me-1"></i>
+            支持 Android 系统 | 版本 1.0.0 
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>© 2024 南开大学 AI Matrix</p>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content login-container">
+        <div class="modal-header border-0">
+          <h5 class="modal-title login-title" id="loginModalLabel">登录</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm">
+            <div class="mb-3">
+              <label for="username" class="form-label">用户名</label>
+              <input type="text" class="form-control" id="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">密码</label>
+              <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">登录</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 添加鼠标移动跟踪
+    document.querySelectorAll('.btn').forEach(button => {
+      button.addEventListener('mousemove', (e) => {
+        const rect = button.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        button.style.setProperty('--mouse-x', `${x}%`);
+        button.style.setProperty('--mouse-y', `${y}%`);
+      });
+    });
+
+    // Initialize Coze chat client
+    document.getElementById('cozeChatBtn').addEventListener('click', function() {
+      new CozeWebSDK.WebChatClient({
+        config: {
+          bot_id: '7486378567102758966',
+        },
+        componentProps: {
+          title: '倾诉空间',
+        },
+        auth: {
+          type: 'token',
+          token: 'pat_pXn867gvobNsZlRqwvwTc61DOB8UZ90ezgR5dCn5Yaw4qG41LSYRigdTMlomwtRA',
+          onRefreshToken: function () {
+            return 'pat_pXn867gvobNsZlRqwvwTc61DOB8UZ90ezgR5dCn5Yaw4qG41LSYRigdTMlomwtRA'
+          }
+        }
+      });
+    });
+
+    // 检查登录状态并更新用户信息
+    function checkLoginStatus() {
+      fetch('/user/info')
+        .then(response => response.json())
+        .then(data => {
+          const userDropdown = document.querySelector('#userDropdown');
+          
+          if (!data.error) {
+            // 已登录状态
+            userDropdown.innerHTML = `${data.nickname}`;
+            // 显示登出按钮
+            document.querySelector('.dropdown-item.text-danger').style.display = 'block';
+          } else {
+            // 未登录状态
+            userDropdown.innerHTML = '用户';
+            // 隐藏登出按钮
+            document.querySelector('.dropdown-item.text-danger').style.display = 'none';
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // 页面加载时检查登录状态
+    document.addEventListener('DOMContentLoaded', checkLoginStatus);
+
+    // 平滑滚动锚点
+    document.querySelectorAll('a.nav-link').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          window.scrollTo({
+            top: target.offsetTop - 80,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // 返回顶部按钮功能
+    const backToTop = document.getElementById("backToTop");
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) {
+        backToTop.style.display = "block";
+      } else {
+        backToTop.style.display = "none";
+      }
+    });
+
+    backToTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    // 设置中心相关功能
+    function loadUserSettings() {
+      fetch('/user/settings')
+        .then(response => response.json())
+        .then(data => {
+          if (!data.error) {
+            // 如果有未保存的设置更改，显示提示标记
+            if (data.hasUnsavedChanges) {
+              document.getElementById('settingsBadge').style.display = 'inline-block';
+            } else {
+              document.getElementById('settingsBadge').style.display = 'none';
+            }
+
+            // 存储用户设置到本地
+            localStorage.setItem('userSettings', JSON.stringify(data.settings));
+          }
+        })
+        .catch(error => console.error('Error loading settings:', error));
+    }
+
+    // 检查是否需要显示设置提醒
+    function checkSettingsNotification() {
+      const lastSettingsCheck = localStorage.getItem('lastSettingsCheck');
+      const now = new Date().getTime();
+      
+      if (!lastSettingsCheck || (now - parseInt(lastSettingsCheck)) > 24 * 60 * 60 * 1000) {
+        document.getElementById('settingsBadge').style.display = 'inline-block';
+        localStorage.setItem('lastSettingsCheck', now.toString());
+      }
+    }
+
+    // 页面加载时初始化设置
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLoginStatus();
+      loadUserSettings();
+      checkSettingsNotification();
+    });
+
+    // 处理设置中心点击事件
+    document.querySelector('.settings-link').addEventListener('click', function(e) {
+      document.getElementById('settingsBadge').style.display = 'none';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live2D 萨摩耶小狗</title>
+    <style>
+        #live2d-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            background: #f0f0f0;
+        }
+        #live2d-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+    <!-- 引入 Cubism 3.0 SDK -->
+    <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@5.3.3/dist/pixi.min.js"></script>
+    <!-- 引入 Cubism 3.0 Framework -->
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
+</head>
+<body>
+    <div id="live2d-container">
+        <canvas id="live2d-canvas"></canvas>
+    </div>
+
+    <script>
+        // 初始化 PIXI Application
+        const app = new PIXI.Application({
+            view: document.getElementById('live2d-canvas'),
+            transparent: true,
+            autoStart: true,
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+
+        // 设置全局变量
+        window.PIXI = PIXI;
+        window.Live2DCubismCore = Live2DCubismCore;
+
+        // 初始化 Cubism Framework
+        async function initCubism() {
+            const option = new Option();
+            option.logFunction = console.log;
+            option.errorFunction = console.error;
+            
+            // 初始化 Cubism Framework
+            await PIXI.live2d.CubismFramework.startUp(option);
+            await PIXI.live2d.CubismFramework.initialize();
+        }
+
+        // 加载模型
+        async function loadModel() {
+            try {
+                // 等待 Cubism Framework 初始化完成
+                await initCubism();
+
+                // 设置模型路径
+                const modelPath = '萨摩耶小狗/萨摩耶小狗.model3.json';
+                
+                // 创建模型
+                const model = await PIXI.live2d.Live2DModel.from(modelPath, {
+                    autoInteract: false,
+                    motionPreload: 'NONE',
+                    idleMotionGroup: 'Idle'
+                });
+
+                // 调整模型大小和位置
+                const scale = 0.25;
+                model.scale.set(scale);
+                model.x = app.screen.width / 2-220;
+                model.y = app.screen.height / 2-400;
+
+                // 添加到舞台
+                app.stage.addChild(model);
+
+                // 启用交互
+                model.buttonMode = true;
+                model.interactive = true;
+                model.on('pointerdown', () => {
+                    try {
+                        model.motion('TapBody');
+                    } catch (e) {
+                        console.log('TapBody motion not found');
+                    }
+                });
+
+                // 自动适应窗口大小
+                window.addEventListener('resize', () => {
+                    app.renderer.resize(window.innerWidth, window.innerHeight);
+                    model.x = app.screen.width / 2-330;
+                    model.y = app.screen.height / 2-400;
+                });
+
+            } catch (error) {
+                console.error('模型加载失败:', error);
+            }
+        }
+
+        // 页面加载完成后加载模型
+        window.addEventListener('load', loadModel);
+    </script>
+</body>
+</html>
