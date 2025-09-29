@@ -1,0 +1,44 @@
+# 敏感配置文件 - 不要提交到版本控制
+# Sensitive configuration files - Do not commit to version control
+.env
+config.js
+
+# API密钥和凭证
+# API keys and credentials
+*.key
+*.pem
+*.p12
+*.keystore
+
+# 日志文件
+# Log files
+*.log
+logs/
+
+# 临时文件
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# 编辑器配置
+# Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 依赖目录
+# Dependencies
+node_modules/
+
+# 构建输出
+# Build output
+dist/
+build/
+
+# 缓存
+# Cache
+.cache/
+*.cache
