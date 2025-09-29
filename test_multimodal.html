@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多模态输入测试</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .input-area {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result-area {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            min-height: 100px;
+        }
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            background-color: #f8f8f8;
+            border-radius: 18px;
+            padding: 5px 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+        }
+        .recording-indicator.active {
+            display: flex;
+        }
+        .recording-indicator .recording-time {
+            margin-right: 10px;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        #imageUpload {
+            display: none;
+        }
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>多模态输入测试</h1>
+        
+        <div class="test-section">
+            <h2>1. 服务器连接测试</h2>
+            <button id="testServerBtn">测试服务器连接</button>
+            <div class="status" id="serverStatus">未测试</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. 语音识别测试</h2>
+            <div class="input-area">
+                <div class="recording-indicator" id="recordingIndicator">
+                    <span class="recording-time" id="recordingTime">00:00</span>
+                    <button class="stop-recording-btn" id="stopRecordingBtn">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                </div>
+                <div class="button-group">
+                    <button id="startVoiceBtn"><i class="fas fa-microphone"></i> 开始录音</button>
+                    <button id="uploadAudioBtn"><i class="fas fa-upload"></i> 上传音频文件</button>
+                    <input type="file" id="audioFileUpload" accept="audio/*" style="display: none;">
+                </div>
+            </div>
+            <div class="result-area" id="asrResult">语音识别结果将显示在这里...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. 图像识别测试</h2>
+            <div class="input-area">
+                <div class="button-group">
+                    <button id="uploadImageBtn"><i class="fas fa-image"></i> 上传图片</button>
+                    <input type="file" id="imageUpload" accept="image/*">
+                </div>
+            </div>
+            <div class="result-area" id="ocrResult">图像识别结果将显示在这里...</div>
+        </div>
+    </div>
+
+    <script>
+        // 服务器地址
+        const SERVER_URL = 'http://localhost:5000';
+        
+        // DOM 元素
+        const elements = {
+            testServerBtn: document.getElementById('testServerBtn'),
+            serverStatus: document.getElementById('serverStatus'),
+            startVoiceBtn: document.getElementById('startVoiceBtn'),
+            stopRecordingBtn: document.getElementById('stopRecordingBtn'),
+            recordingIndicator: document.getElementById('recordingIndicator'),
+            recordingTime: document.getElementById('recordingTime'),
+            asrResult: document.getElementById('asrResult'),
+            uploadAudioBtn: document.getElementById('uploadAudioBtn'),
+            audioFileUpload: document.getElementById('audioFileUpload'),
+            uploadImageBtn: document.getElementById('uploadImageBtn'),
+            imageUpload: document.getElementById('imageUpload'),
+            ocrResult: document.getElementById('ocrResult')
+        };
+        
+        // 录音相关变量
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingTimer;
+        let recordingSeconds = 0;
+        
+        // 测试服务器连接
+        elements.testServerBtn.addEventListener('click', async () => {
+            elements.serverStatus.textContent = '正在测试连接...';
+            try {
+                const response = await fetch(`${SERVER_URL}/asr`, {
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+                elements.serverStatus.textContent = '服务器连接成功！';
+                elements.serverStatus.style.color = '#27ae60';
+            } catch (error) {
+                elements.serverStatus.textContent = `连接失败: ${error.message}`;
+                elements.serverStatus.style.color = '#e74c3c';
+                console.error('服务器连接测试失败:', error);
+            }
+        });
+        
+        // 开始录音
+        elements.startVoiceBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    audioChunks.push(event.data);
+                });
+                
+                mediaRecorder.addEventListener('stop', () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    sendAudioToServer(audioBlob);
+                    stopRecordingTimer();
+                    elements.recordingIndicator.classList.remove('active');
+                });
+                
+                mediaRecorder.start();
+                startRecordingTimer();
+                elements.recordingIndicator.classList.add('active');
+                elements.asrResult.textContent = '正在录音...';
+            } catch (error) {
+                console.error('无法访问麦克风:', error);
+                elements.asrResult.textContent = `错误: ${error.message}`;
+            }
+        });
+        
+        // 停止录音
+        elements.stopRecordingBtn.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        });
+        
+        // 上传音频文件
+        elements.uploadAudioBtn.addEventListener('click', () => {
+            elements.audioFileUpload.click();
+        });
+        
+        elements.audioFileUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                elements.asrResult.textContent = `正在处理音频文件: ${file.name}...`;
+                sendAudioToServer(file);
+            }
+        });
+        
+        // 上传图片
+        elements.uploadImageBtn.addEventListener('click', () => {
+            elements.imageUpload.click();
+        });
+        
+        elements.imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                elements.ocrResult.textContent = `正在处理图片: ${file.name}...`;
+                sendImageToServer(file);
+            }
+        });
+        
+        // 发送音频到服务器
+        async function sendAudioToServer(audioBlob) {
+            try {
+                const formData = new FormData();
+                formData.append('file', audioBlob);
+                
+                elements.asrResult.textContent = '正在发送音频到服务器进行识别...';
+                
+                const response = await fetch(`${SERVER_URL}/asr`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    // 检查是否是ffmpeg相关错误
+                    if (result.error.includes('ffmpeg') || result.error.includes('音频转换失败')) {
+                        elements.asrResult.innerHTML = `<div style="color: #e74c3c;">
+                            <strong>错误:</strong> ${result.error}
+                            <br><br>
+                            <strong>解决方法:</strong>
+                            <ol>
+                                <li>下载并安装 <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg</a></li>
+                                <li>确保ffmpeg添加到系统环境变量PATH中</li>
+                                <li>重启服务器和浏览器</li>
+                            </ol>
+                        </div>`;
+                    } else {
+                        elements.asrResult.textContent = `错误: ${result.error}`;
+                    }
+                    return;
+                }
+                
+                if (result.baidu_result && result.baidu_result.result) {
+                    elements.asrResult.textContent = result.baidu_result.result.join('\n');
+                } else {
+                    elements.asrResult.textContent = '未能识别语音内容';
+                }
+            } catch (error) {
+                console.error('发送音频失败:', error);
+                elements.asrResult.textContent = `发送失败: ${error.message}`;
+            }
+        }
+        
+        // 发送图片到服务器
+        async function sendImageToServer(imageFile) {
+            try {
+                const formData = new FormData();
+                formData.append('file', imageFile);
+                
+                elements.ocrResult.textContent = '正在发送图片到服务器进行识别...';
+                
+                const response = await fetch(`${SERVER_URL}/ocr`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    elements.ocrResult.textContent = `错误: ${result.error}`;
+                    return;
+                }
+                
+                if (result.text) {
+                    elements.ocrResult.textContent = result.text;
+                } else {
+                    elements.ocrResult.textContent = '未能识别图片中的文字';
+                }
+            } catch (error) {
+                console.error('发送图片失败:', error);
+                elements.ocrResult.textContent = `发送失败: ${error.message}`;
+            }
+        }
+        
+        // 录音计时器
+        function startRecordingTimer() {
+            recordingSeconds = 0;
+            updateRecordingTime();
+            recordingTimer = setInterval(() => {
+                recordingSeconds++;
+                updateRecordingTime();
+                
+                // 自动停止录音（60秒）
+                if (recordingSeconds >= 60) {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                    }
+                }
+            }, 1000);
+        }
+        
+        function stopRecordingTimer() {
+            clearInterval(recordingTimer);
+        }
+        
+        function updateRecordingTime() {
+            const minutes = Math.floor(recordingSeconds / 60);
+            const seconds = recordingSeconds % 60;
+            elements.recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>

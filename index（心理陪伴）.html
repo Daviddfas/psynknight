@@ -1,28 +1,51 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<!-- 
+⚠️ 安全提醒：
+本文件包含DeepSeek API密钥配置，请注意：
+1. 立即将API_KEY替换为您的新密钥
+2. 不要将包含真实密钥的文件提交到版本控制系统
+3. 建议在生产环境中使用环境变量或后端代理
+-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聆心小开 - 优化版</title>
+    <title>聆心小开 - 心理陪伴对话界面</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2d.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.2/dist/browser/pixi.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/index.min.js"></script>
+    
+    <!-- DeepSeek API 配置 -->
+    <script>
+        // DeepSeek API 配置
+        const DEEPSEEK_CONFIG = {
+            API_KEY: 'sk-5c8052453c2c44519d52759bc8213e4b', // 已更新为新密钥
+            BASE_URL: 'https://api.deepseek.com/v1/chat/completions',
+            MODEL: 'deepseek-chat',
+            MAX_TOKENS: 1000,
+            TEMPERATURE: 0.7
+        };
+        
+        // 安全提醒：请尽快替换为新的API密钥
+        console.warn('⚠️ 请尽快替换DeepSeek API密钥为新生成的密钥！');
+    </script>
+    <!-- 移除了Live2D相关脚本 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap');
 
         :root {
-            --primary-color: #9d6ff2;
-            --secondary-color: #bc82f2;
-            --error-color: #ff6666;
-            --nankai-purple: #663399;
+            --primary-color: #3c77dd;
+            --secondary-color: #4cb1ef;
+            --error-color: #f35555;
+            --nankai-purple: #245485;
         }
 
         body {
-            background: linear-gradient(to bottom right, #e6d8f3, #ffffff);
+            background: url('./模型3.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             font-family: 'SimSun', '宋体', serif;
             margin: 0;
             padding: 0;
@@ -31,45 +54,56 @@
             flex-direction: column;
             overflow-x: hidden;
         }
-
-        /* 修复模型容器样式 */
-        .live2d-container {
-            width: 280px;
-            height: 380px; /* 恢复并设置一个足够的高度 */
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(102, 51, 153, 0.3);
-            transition: all 0.3s ease;
-            animation: breathe 3s ease-in-out infinite;
-            overflow: hidden; /* 仍然隐藏超出部分，但容器更高了 */
-            position: relative;
-            margin: 0 auto;
+        
+        /* 移动设备使用不同的背景图片 - 缩小比例 */
+        @media (max-width: 768px) {
+            body {
+                background: url('./model.png');
+                background-size: 100%; /* 缩小背景图片比例 */
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }
         }
-
-        /* 移动端备选模型容器 */
-        .mobile-model-fallback {
+        
+        .image-container {
+            /* 容器使用与页面相同的背景 */
+            background: transparent; /* 透明背景，显示页面背景图 */
             width: 280px;
-            height: 380px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(102, 51, 153, 0.3);
+            height: 280px;
+            margin: 0 auto;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            position: relative;
+            text-align: center;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            height: auto;
+            display: block;
             margin: 0 auto;
-            overflow: hidden;
+        }
+        
+        /* 移动端不需要额外显示小狗图片，直接使用背景 */
+        .mobile-image-container {
+            display: none; /* 始终隐藏，使用背景图片代替 */
+            width: 0;
+            height: 0;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .mobile-avatar-image {
+            max-width: 100%;
+            max-height: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
         }
 
-        .mobile-model-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 20px;
-        }
+        /* 删除了静态图片模型容器样式 */
 
         /* 呼吸动画 */
         @keyframes breathe {
@@ -115,19 +149,19 @@
         /* 气泡容器 - 修复对齐问题 */
         .bubble-container {
             position: absolute;
-            top: 0px; /* 调整位置在模型上方 */
-            left: 50%;
+            top: 10px; /* 向下移动10px */
+            left: 55%; /* 向右移动5% */
             transform: translateX(-50%) translateY(10px); /* 初始位置稍微下移 */
             max-width: 400px;
             min-width: 200px;
             z-index: 10;
             width: 100%;
-            opacity: 1; /* 初始隐藏 */
+            opacity: 1; /* 初始显示 */
             pointer-events: none; /* 初始不响应鼠标事件 */
             transition: all 6s ease-out; /* 添加过渡效果 */
         }
 
-        /* 移动端气泡位置调整 */
+        /* 移动端气泡位置调整 - 紧贴页面上部 */
         .mobile-bubble-container {
             position: relative;
             top: 0;
@@ -135,7 +169,7 @@
             transform: none;
             max-width: 100%;
             opacity: 1;
-            margin-top: 20px;
+            margin-top: -150px; /* 更大幅度向上移动气泡，使其紧贴页面上部 */
             margin-bottom: 20px;
             pointer-events: auto;
         }
@@ -178,7 +212,7 @@
         /* 定义气泡激活（悬停在模型上时）的状态 */
         .bubble-container.bubble-active {
             opacity: 1; /* 完全显示 */
-            transform: translateX(-50%) translateY(0); /* 恢复到正常位置 */
+            transform: translateX(-50%) translateY(0); /* 保持位置 */
             box-shadow: 0 8px 25px rgba(102, 51, 153, 0.3); /* 添加阴影 */
             pointer-events: auto; /* 响应鼠标事件 */
         }
@@ -201,6 +235,44 @@
 
         .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* 错误消息样式 */
+        .error-message {
+            color: #e74c3c;
+            padding: 10px 15px;
+            border-radius: 8px;
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 3px solid #e74c3c;
+            margin: 5px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .error-message i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        /* 网络警告消息样式 */
+        .network-warning {
+            color: #f39c12;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background-color: rgba(243, 156, 18, 0.1);
+            border-left: 3px solid #f39c12;
+            margin: 5px auto;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            max-width: 90%;
+            align-self: center;
+        }
+        
+        .network-warning i {
+            margin-right: 8px;
+            font-size: 15px;
+        }
 
         @keyframes typing {
             0%, 100% { transform: translateY(0); }
@@ -256,7 +328,7 @@
         }
 
         .chat-history::-webkit-scrollbar-thumb:hover {
-            background: rgba(102, 51, 153, 0.5);
+            background: rgba(29, 143, 237, 0.5);
         }
 
         /* Firefox滚动条样式 */
@@ -285,7 +357,7 @@
         }
 
         .user {
-            background: linear-gradient(135deg, var(--nankai-purple), #8a4fff);
+            background: linear-gradient(135deg, var(--nankai-purple), #0f73ad);
             color: white;
             margin-left: auto;
         }
@@ -419,7 +491,7 @@
         .emotion-loading-spinner {
             width: 50px;
             height: 50px;
-            border: 4px solid rgba(102, 51, 153, 0.2);
+            border: 4px solid rgba(22, 91, 176, 0.2);
             border-top: 4px solid var(--nankai-purple);
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -446,6 +518,446 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 心理日记悬浮窗样式 */
+        .psychology-diary-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 300;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .diary-modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .diary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .diary-header button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .diary-header button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .diary-content {
+            padding: 25px;
+        }
+
+        .diary-section {
+            margin-bottom: 25px;
+        }
+
+        .diary-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--nankai-purple);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .diary-text-area {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 80px;
+            line-height: 1.6;
+            color: #333;
+            border: 1px solid #e9ecef;
+        }
+
+        .diary-emotion-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .emotion-tag {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(60, 119, 221, 0.3);
+        }
+
+        .diary-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            background: #f8f9fa;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .diary-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(60, 119, 221, 0.1);
+        }
+
+        .diary-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .diary-modal-content {
+                width: 95%;
+                max-height: 90vh;
+                margin: 20px;
+            }
+
+            .diary-header,
+            .diary-content,
+            .diary-footer {
+                padding: 15px 20px;
+            }
+
+            .diary-footer {
+                flex-direction: column;
+            }
+
+            .diary-footer button {
+                width: 100%;
+                margin: 0;
+            }
+        }
+        
+        /* 情绪罐子样式 */
+        .emotion-jar-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .emotion-jar {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.6) 100%);
+            border: 4px solid rgba(135, 206, 235, 0.8);
+            border-radius: 20px 20px 40px 40px;
+            overflow: hidden;
+            margin: 10px 0;
+            min-height: 200px;
+            box-shadow: 
+                inset 0 2px 10px rgba(255, 255, 255, 0.8),
+                inset 0 -2px 10px rgba(135, 206, 235, 0.2),
+                0 4px 20px rgba(135, 206, 235, 0.3);
+        }
+        
+        .emotion-jar::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 20px;
+            background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+            border: 2px solid #ccc;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        .emotion-jar::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            right: 10px;
+            height: 30px;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.6) 0%, 
+                rgba(255, 255, 255, 0.2) 30%, 
+                rgba(255, 255, 255, 0.1) 70%, 
+                rgba(255, 255, 255, 0.4) 100%);
+            border-radius: 15px;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .emotion-display {
+            padding: 20px;
+            min-height: 160px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .emotion-emoji {
+            font-size: 32px;
+            animation: dropIn 0.6s ease-out;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            user-select: none;
+        }
+        
+        .emotion-emoji:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        @keyframes dropIn {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(10px) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+                opacity: 1;
+            }
+        }
+        
+        .jar-empty-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: rgba(135, 206, 235, 0.6);
+            font-size: 14px;
+            pointer-events: none;
+        }
+        
+        .jar-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .add-emotion-btn, .clear-jar-btn, .stats-btn, .ai-summary-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .add-emotion-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .add-emotion-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .clear-jar-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .clear-jar-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+        
+        .stats-btn {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: white;
+        }
+        
+        .stats-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 154, 158, 0.4);
+        }
+        
+        .ai-summary-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .ai-summary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+
+        
+        /* 情绪选择器样式 */
+        .emotion-selector {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .emotion-selector h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--nankai-purple);
+        }
+        
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .emotion-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .emotion-option:hover {
+            border-color: var(--nankai-purple);
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.05);
+        }
+        
+        .emotion-option.selected {
+            border-color: var(--nankai-purple);
+            background: rgba(102, 126, 234, 0.2);
+        }
+        
+        .emotion-emoji {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .emotion-name {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .selector-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .confirm-btn, .cancel-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .confirm-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+        
+        .confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        .cancel-btn {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        .cancel-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+        
+        .emotion-selector-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
         }
 
         /* 移动端适配 - 响应式设计 */
@@ -547,23 +1059,23 @@
                 height: 320px; /* 增加高度以适应模型 */
             }
             
-            /* 移动端气泡位置调整 */
+            /* 移动端气泡位置调整 - 紧贴页面上部 */
             .bubble-container.mobile-bubble-container {
                 position: relative;
                 top: 0;
                 left: 0;
                 transform: none;
-                max-width: 100%;
+                max-width: 90%; /* 缩小气泡宽度 */
                 opacity: 1;
-                margin-top: 20px;
+                margin-top: -180px; /* 更大幅度向上移动气泡，使其紧贴页面上部 */
                 margin-bottom: 20px;
                 pointer-events: auto;
             }
             
             .ai-bubble.mobile-ai-bubble {
-                max-height: 150px;
-                font-size: 14px;
-                padding: 12px 16px;
+                max-height: 130px; /* 缩小气泡高度 */
+                font-size: 13px; /* 缩小字体 */
+                padding: 10px 14px; /* 减小内边距 */
             }
             
             /* 移动端日历调整 */
@@ -886,13 +1398,373 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
+        
+        /* 统计弹窗样式 */
+        .stats-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .stats-modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .stats-modal-header {
+            padding: 20px 60px 15px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            background: linear-gradient(135deg, var(--nankai-purple), var(--nankai-light));
+            color: white;
+            border-radius: 15px 15px 0 0;
+            position: relative;
+        }
+        
+        .stats-modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .stats-modal-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #333;
+            opacity: 1;
+            transition: all 0.2s;
+            padding: 8px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.9);
+            user-select: none;
+            border: 2px solid #ddd;
+            font-weight: bold;
+            line-height: 1;
+            z-index: 99999;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            pointer-events: auto;
+        }
+        
+        .stats-modal-close:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 1);
+            color: #ff4757;
+            transform: scale(1.1);
+            border-color: #ff4757;
+        }
+        
+        .stats-modal-close:active {
+            transform: scale(0.95);
+        }
+        
+        .stats-modal-body {
+            padding: 25px;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9ff, #e8f0ff);
+            border-radius: 10px;
+            border: 1px solid #e0e8ff;
+        }
+        
+        .stats-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--nankai-purple);
+            margin-bottom: 5px;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .emotion-distribution h4 {
+            margin: 0 0 20px 0;
+            color: var(--nankai-purple);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .emotion-bar-item {
+            margin-bottom: 15px;
+        }
+        
+        .emotion-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .emotion-emoji {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+        
+        .emotion-name {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .emotion-count {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .emotion-bar {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .emotion-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--nankai-purple), var(--nankai-light));
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* AI总结清单样式 */
+        .ai-summary-list {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .ai-summary-list h4 {
+            color: var(--nankai-purple);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 20px 0 10px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0ff;
+        }
+        
+        .ai-summary-list h4:first-child {
+            margin-top: 0;
+        }
+        
+        .summary-checklist {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+        }
+        
+        .summary-checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        
+        .summary-checklist li:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-checklist li:hover {
+            background-color: #f8f9ff;
+            padding-left: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        @media (max-width: 480px) {
+            .stats-modal-content {
+                width: 95%;
+                max-height: 85vh;
+            }
+            
+            .stats-modal-header {
+                padding: 15px 20px 10px;
+            }
+            
+            .stats-modal-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .stats-modal-body {
+                padding: 20px;
+            }
+            
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stats-card {
+                padding: 12px;
+            }
+            
+            .stats-number {
+                font-size: 1.5rem;
+            }
+        }
+        
+
+        
+
+
+
+
+        .emotion-distribution {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .emotion-bar {
+            text-align: center;
+        }
+
+        .emotion-bar-emoji {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .emotion-bar-progress {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .emotion-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .emotion-bar-count {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .emotion-insights {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .insight-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .insight-icon {
+            font-size: 1.1rem;
+            margin-top: 2px;
+        }
+
+        .insight-text {
+            flex: 1;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .notes-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .notes-modal-content {
+                max-width: 95vw;
+                margin: 10px;
+            }
+            
+            .notes-header {
+                padding: 15px 20px;
+            }
+            
+            .notes-content {
+                padding: 20px;
+            }
+            
+            .notes-overview-cards {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+
+        }
     </style>
-    <!-- 引入 Cubism 3.0 SDK -->
-    <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pixi.js@5.3.3/dist/pixi.min.js"></script>
-    <!-- 引入 Cubism 3.0 Framework -->
-    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
+    <!-- 移除了Live2D相关脚本 -->
 </head>
 
 <body>
@@ -913,6 +1785,11 @@
             </div>
         </div>
         <div class="header-right">
+            <!-- 添加心理日记按钮 -->
+            <button id="psychologyDiaryBtn"
+                class="desktop-only bg-purple-600 text-white px-4 py-2 rounded-full shadow hover:bg-purple-700 transition-colors mr-3">
+                <i class="fas fa-book mr-2"></i>心理日记
+            </button>
             <!-- 添加电脑端情绪日历按钮 -->
             <button id="desktopCalendarBtn"
                 class="desktop-only bg-purple-600 text-white px-4 py-2 rounded-full shadow hover:bg-purple-700 transition-colors">
@@ -944,10 +1821,140 @@
             </button>
         </div>
         <div id="calendarGrid" class="calendar-grid"></div>
+        
+        <!-- 情绪罐子 -->
+        <div class="emotion-jar-container">
+            <h4 class="text-md font-semibold mb-2" style="color: var(--nankai-purple);">情绪收集罐</h4>
+            <div id="emotionJar" class="emotion-jar">
+                <div id="emotionDisplay" class="emotion-display">
+                    <div class="jar-empty-message" id="jarEmptyMessage">
+                        <div>点击"添加情绪"来收集你的情绪</div>
+                        <div style="font-size: 12px; margin-top: 5px;">情绪会以动画形式掉落到罐子里</div>
+                    </div>
+                </div>
+            </div>
+            <div class="jar-controls">
+                <button id="addEmotionBtn" class="add-emotion-btn">
+                    <i class="fas fa-plus mr-1"></i>添加情绪
+                </button>
+                <button id="clearJarBtn" class="clear-jar-btn">
+                    <i class="fas fa-trash mr-1"></i>清空罐子
+                </button>
+                <button id="statsBtn" class="stats-btn">
+                    <i class="fas fa-chart-bar mr-1"></i>情绪统计
+                </button>
+                <button id="aiSummaryBtn" class="ai-summary-btn">
+                    <i class="fas fa-brain mr-1"></i>AI总结
+                </button>
+            </div>
+        </div>
+        
         <div class="mt-4 text-sm text-gray-500">
             <p>注：根据过去7天对话内容分析</p>
         </div>
     </div>
+    
+    <!-- 情绪选择器 -->
+    <div class="emotion-selector-overlay" id="emotionSelectorOverlay"></div>
+    <div class="emotion-selector" id="emotionSelector">
+        <h3>选择你的情绪</h3>
+        <div class="emotion-grid" id="emotionGrid">
+            <div class="emotion-option" data-emoji="😊" data-name="开心">
+                <div class="emotion-emoji">😊</div>
+                <div class="emotion-name">开心</div>
+            </div>
+            <div class="emotion-option" data-emoji="😢" data-name="难过">
+                <div class="emotion-emoji">😢</div>
+                <div class="emotion-name">难过</div>
+            </div>
+            <div class="emotion-option" data-emoji="😠" data-name="愤怒">
+                <div class="emotion-emoji">😠</div>
+                <div class="emotion-name">愤怒</div>
+            </div>
+            <div class="emotion-option" data-emoji="😌" data-name="平静">
+                <div class="emotion-emoji">😌</div>
+                <div class="emotion-name">平静</div>
+            </div>
+            <div class="emotion-option" data-emoji="😲" data-name="惊讶">
+                <div class="emotion-emoji">😲</div>
+                <div class="emotion-name">惊讶</div>
+            </div>
+            <div class="emotion-option" data-emoji="😨" data-name="恐惧">
+                <div class="emotion-emoji">😨</div>
+                <div class="emotion-name">恐惧</div>
+            </div>
+
+            <div class="emotion-option" data-emoji="😴" data-name="疲惫">
+                <div class="emotion-emoji">😴</div>
+                <div class="emotion-name">疲惫</div>
+            </div>
+            <div class="emotion-option" data-emoji="🤔" data-name="思考">
+                <div class="emotion-emoji">🤔</div>
+                <div class="emotion-name">思考</div>
+            </div>
+            <div class="emotion-option" data-emoji="😅" data-name="尴尬">
+                <div class="emotion-emoji">😅</div>
+                <div class="emotion-name">尴尬</div>
+            </div>
+
+
+            <div class="emotion-option" data-emoji="😤" data-name="不满">
+                <div class="emotion-emoji">😤</div>
+                <div class="emotion-name">不满</div>
+            </div>
+            <div class="emotion-option" data-emoji="🥺" data-name="委屈">
+                <div class="emotion-emoji">🥺</div>
+                <div class="emotion-name">委屈</div>
+            </div>
+
+        </div>
+        <div class="selector-controls">
+            <button class="confirm-btn" id="confirmEmotionBtn">确认添加</button>
+            <button class="cancel-btn" id="cancelEmotionBtn">取消</button>
+        </div>
+    </div>
+
+    <!-- 心理日记悬浮窗 -->
+    <div id="psychologyDiaryModal" class="psychology-diary-modal" style="display: none;">
+        <div class="diary-modal-content">
+            <div class="diary-header">
+                <h3 class="text-lg font-bold" style="color: var(--nankai-purple);">心理日记</h3>
+                <button id="closeDiaryBtn" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="diary-content">
+                <div class="diary-section">
+                    <h4 class="diary-section-title">今日对话总结</h4>
+                    <div id="diaryConversationSummary" class="diary-text-area">
+                        正在分析最近的对话内容...
+                    </div>
+                </div>
+                <div class="diary-section">
+                    <h4 class="diary-section-title">核心情绪</h4>
+                    <div id="diaryCoreEmotion" class="diary-emotion-tags">
+                        <span class="emotion-tag">分析中...</span>
+                    </div>
+                </div>
+                <div class="diary-section">
+                    <h4 class="diary-section-title">个人感悟 <span class="text-sm text-gray-500">(可编辑)</span></h4>
+                    <textarea id="diaryPersonalThoughts" class="diary-textarea" placeholder="记录下你的想法和感悟..."></textarea>
+                </div>
+            </div>
+            <div class="diary-footer">
+                <button id="saveDiaryBtn" class="bg-purple-600 text-white px-6 py-2 rounded-full shadow hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>保存日记
+                </button>
+                <button id="exportDiaryBtn" class="bg-gray-500 text-white px-6 py-2 rounded-full shadow hover:bg-gray-600 transition-colors ml-3">
+                    <i class="fas fa-download mr-2"></i>导出
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+
 
     <!-- 情绪分析加载指示器 -->
     <div id="emotionLoading" class="emotion-loading">
@@ -968,18 +1975,6 @@
                         <div class="ai-bubble" id="aiBubble">
                             <div id="bubbleContent">你好！我是聆心小开，你的专属心理陪伴助手。有什么想聊的吗？😊</div>
                         </div>
-                    </div>
-
-                    <!-- Live2D模型容器 -->
-                    <div id="live2d-container">
-                        <canvas id="live2d-canvas"></canvas>
-                    </div>
-                    
-                    <!-- 移动端备选模型容器 -->
-                    <div class="mobile-model-fallback" id="mobileModelFallback" style="display:none;">
-                        <img src="https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/shizuku/shizuku.png" 
-                             alt="聆心小开形象" 
-                             class="mobile-model-image">
                     </div>
                 </div>
             </div>
@@ -1029,130 +2024,74 @@
     <script>
         'use strict';
 
-        //const cubism2Model = "https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/shizuku/shizuku.model.json";
-        const cubism2Model = "./assets/萨摩耶小狗/萨摩耶小狗.model3.json";
-        const cubism4Model = "https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json";
-
         // 检测是否为移动设备
         function isMobileDevice() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
         
-        // 检测WebGL支持
-        function isWebGLSupported() {
-            try {
-                const canvas = document.createElement('canvas');
-                return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-            } catch (e) {
-                return false;
+        // 检测网络连接状态
+        function checkNetworkStatus() {
+            // 获取网络连接信息（仅在支持的浏览器中有效）
+            if ('connection' in navigator) {
+                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (connection) {
+                    // 检查网络类型
+                    if (connection.type === 'cellular') {
+                        // 移动数据连接
+                        return {
+                            type: 'cellular',
+                            effectiveType: connection.effectiveType || 'unknown',
+                            downlink: connection.downlink || 0
+                        };
+                    } else if (connection.type === 'wifi') {
+                        // WiFi连接
+                        return {
+                            type: 'wifi',
+                            effectiveType: connection.effectiveType || 'unknown',
+                            downlink: connection.downlink || 0
+                        };
+                    }
+                }
             }
+            
+            // 如果无法获取具体信息，返回默认值
+            return {
+                type: 'unknown',
+                effectiveType: 'unknown',
+                downlink: 0
+            };
         }
 
-        (async function main() {
-            // 不再仅因移动设备而跳过加载Live2D模型
-            if (!isWebGLSupported()) {
-                console.log('WebGL不支持，启用备选方案');
-                document.getElementById('live2dContainer').style.display = 'none';
-                document.getElementById('loadingIndicator').style.display = 'none';
-                
-                // 显示备选模型
-                document.getElementById('mobileModelFallback').style.display = 'block';
-                
-                // 调整气泡样式为移动端样式
-                const bubbleContainer = document.getElementById('bubbleContainer');
+        (function main() {
+            // 调整气泡样式
+            const bubbleContainer = document.getElementById('bubbleContainer');
+            const aiBubble = document.getElementById('aiBubble');
+            const mobileImageContainer = document.getElementById('mobileImageContainer');
+            
+            // 根据设备类型添加适当的样式
+            if (isMobileDevice()) {
                 bubbleContainer.classList.add('mobile-bubble-container');
-                bubbleContainer.classList.add('bubble-active');
-                
-                const aiBubble = document.getElementById('aiBubble');
                 aiBubble.classList.add('mobile-ai-bubble');
                 
-                return;
+                // 不再显示额外的小狗图片，直接使用背景
+                if (mobileImageContainer) {
+                    mobileImageContainer.style.display = 'none';
+                }
             }
             
-            const dpr = window.devicePixelRatio || 1;
-            const app = new PIXI.Application({
-                view: document.getElementById("canvas"),
-                width: 280 * dpr,
-                height: 360 * dpr,
-                transparent: true,
-                antialias: true
+            // 显示气泡
+            bubbleContainer.classList.add('bubble-active');
+
+            // 鼠标悬停在气泡上时保持激活状态
+            bubbleContainer.addEventListener('mouseenter', () => {
+                bubbleContainer.classList.add('bubble-active');
             });
-            app.view.style.width = "280px";
-            app.view.style.height = "360px";
 
-            // 显示加载指示器
-            document.getElementById('loadingIndicator').style.display = 'block';
-            
-            // 设置超时机制（10秒）
-            const loadTimeout = setTimeout(() => {
-                console.log('模型加载超时，启用备选方案');
-                document.getElementById('loadingIndicator').style.display = 'none';
-                document.getElementById('live2dContainer').style.display = 'none';
-                document.getElementById('mobileModelFallback').style.display = 'block';
-                document.getElementById('bubbleContainer').classList.add('bubble-active');
-            }, 10000);
-            
-            try { 
-                const model2 = await PIXI.live2d.Live2DModel.from(cubism2Model); 
-                clearTimeout(loadTimeout); // 清除超时
-                
-                model2.anchor.set(0.5, 0.5); // 锚点保持在中心
-
-                // 调整模型位置，使其底部（桌子部分）与容器底部对齐
-                // 这需要一个经验性的向下偏移量，结合容器高度进行调整
-                const containerHeight = app.renderer.height; // 380px
-                // 估算将模型中心向下移动多少，才能让桌子底部在容器底部
-                // 这是一个尝试值，可能需要进一步微调
-                const manualDownwardOffset = 150; // 尝试向下偏移量
-                const targetY = containerHeight / 2 + manualDownwardOffset; // 从容器中心向下偏移
-
-                model2.position.set(app.renderer.width / 2, targetY); 
-                model2.scale.set(0.38 * dpr, 0.38 * dpr); // 保持缩放比例
-                app.stage.addChild(model2);
-                
-                // 获取Live2D容器元素
-                const live2dContainer = document.getElementById('live2dContainer');
-                const bubbleContainer = document.getElementById('bubbleContainer');
-
-                // 鼠标悬停事件
-                live2dContainer.addEventListener('mouseenter', () => {
-                    bubbleContainer.classList.add('bubble-active');
-                });
-
-                live2dContainer.addEventListener('mouseleave', () => {
-                    // 延迟移除active类，以便鼠标从模型移到气泡时气泡不消失
-                    setTimeout(() => {
-                         if (!live2dContainer.matches(':hover') && !bubbleContainer.matches(':hover')) {
-                             bubbleContainer.classList.remove('bubble-active');
-                         }
-                    }, 50);
-                });
-
-                // 鼠标悬停在气泡上时保持激活状态
-                 bubbleContainer.addEventListener('mouseenter', () => {
-                     bubbleContainer.classList.add('bubble-active');
-                 });
-
-                 // 鼠标离开气泡时检查是否也离开了模型，如果都离开了则移除active类
-                 bubbleContainer.addEventListener('mouseleave', () => {
-                     setTimeout(() => {
-                         if (!live2dContainer.matches(':hover') && !bubbleContainer.matches(':hover')) {
-                             bubbleContainer.classList.remove('bubble-active');
-                         }
-                     }, 50);
-                 });
-
-                // 隐藏加载指示器
-                document.getElementById('loadingIndicator').style.display = 'none';
-            } catch (error) {
-                clearTimeout(loadTimeout); // 清除超时
-                console.error('模型加载失败:', error);
-                document.getElementById('loadingIndicator').innerHTML = '<p>模型加载失败</p>';
-                
-                // 加载失败时显示备选方案
-                document.getElementById('mobileModelFallback').style.display = 'block';
-                document.getElementById('bubbleContainer').classList.add('bubble-active');
-            }
+            // 鼠标离开气泡时保持气泡显示
+            bubbleContainer.addEventListener('mouseleave', () => {
+                // 保持气泡始终可见
+                bubbleContainer.classList.add('bubble-active');
+            });
         })();
 
         // 生成唯一用户ID
@@ -1196,7 +2135,7 @@
 
         const userId = getUserIdFromUrl();
         let chatHistory = JSON.parse(localStorage.getItem(`chatHistory_${userId}`)) || [];
-        const MAX_HISTORY = 20;
+        const MAX_HISTORY = 30;
         const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
         const elements = {
             input: document.getElementById('userInput'),
@@ -1337,6 +2276,35 @@
             const decoded = decodeHTMLEntities(rawText);
             let processed = decoded;
 
+            // 移除markdown格式字符
+            processed = processed
+                // 移除markdown标题符号
+                .replace(/^#{1,6}\s*/gm, '')
+                // 移除markdown粗体和斜体
+                .replace(/\*\*([^*]+)\*\*/g, '$1')
+                .replace(/\*([^*]+)\*/g, '$1')
+                .replace(/__([^_]+)__/g, '$1')
+                .replace(/_([^_]+)_/g, '$1')
+                // 移除markdown代码块
+                .replace(/```[\s\S]*?```/g, '')
+                .replace(/`([^`]+)`/g, '$1')
+                // 移除markdown链接格式但保留链接文本
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                // 移除markdown图片格式
+                .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+                // 移除markdown引用符号
+                .replace(/^>\s*/gm, '')
+                // 移除markdown列表符号
+                .replace(/^[\s]*[-*+]\s+/gm, '')
+                .replace(/^[\s]*\d+\.\s+/gm, '')
+                // 移除markdown分割线
+                .replace(/^[-*_]{3,}$/gm, '')
+                // 移除其他特殊字符
+                .replace(/[\[\]{}~]/g, '')
+                // 清理多余的空行
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
             // 优化图片处理
             processed = processed.replace(/<img[\s\S]*?>/gi, '');
             
@@ -1451,6 +2419,37 @@
             return rawResponse;
         }
 
+        // 预检测网络状态并提供反馈
+        async function checkNetworkBeforeSend() {
+            // 获取网络状态
+            const networkStatus = checkNetworkStatus();
+            
+            // 如果是移动设备且使用移动数据，提供网络质量提示
+            if (isMobileDevice() && networkStatus.type === 'cellular') {
+                if (networkStatus.effectiveType === '2g' || networkStatus.effectiveType === 'slow-2g') {
+                    // 网络信号较弱，显示提示但允许继续
+                    console.warn('移动网络信号较弱，可能影响响应速度');
+                    return {
+                        canProceed: true,
+                        warning: '当前移动网络信号较弱，响应可能较慢'
+                    };
+                } else if (networkStatus.downlink < 0.5) {
+                    // 网络速度较慢，显示提示但允许继续
+                    console.warn('移动网络速度较慢，可能影响响应速度');
+                    return {
+                        canProceed: true,
+                        warning: '当前网络速度较慢，响应可能需要更长时间'
+                    };
+                }
+            }
+            
+            // 网络状态良好或无法检测
+            return {
+                canProceed: true,
+                warning: null
+            };
+        }
+        
         elements.sendBtn.addEventListener('click', async () => {
             try {
                 if (elements.sendBtn.disabled) return;
@@ -1462,6 +2461,14 @@
                 }
 
                 setButtonState(false);
+                
+                // 检查网络状态
+                const networkCheck = await checkNetworkBeforeSend();
+                if (networkCheck.warning) {
+                    // 显示网络状态提示（不阻止发送）
+                    const warningHtml = `<div class="network-warning"><i class="fas fa-wifi"></i> ${networkCheck.warning}</div>`;
+                    addToHistory(warningHtml, 'system');
+                }
 
                 // 添加用户消息到历史
                 const now = new Date();
@@ -1471,44 +2478,289 @@
                 addToHistory(userContent, 'user', now.toISOString());
                 elements.input.value = '';
 
-                // 发送请求
-                const response = await fetch('https://api.coze.cn/v3/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer pat_L13Xn5ZvWCUCwryoatZnOwtphTxLznkOZqGoPluEO0DaKuBweZsmePpbvV5usTi2',
-                        'Content-Type': 'application/json',
-                        'Accept': 'text/event-stream'
+                // 构建DeepSeek API消息格式
+                const messages = [
+                    {
+                        role: 'system',
+                        content: '你是聆心小开，一个温暖的心理陪伴者。请像一个真正关心用户的朋友那样交流：用心倾听，真诚回应，记住对方说过的话。绝对禁止：不要提任何问题，不要询问任何事情，不要用疑问句。只需要给予理解、共情和陪伴，让用户感受到被倾听而不是被询问。当需要给出建议时，使用温柔的陈述句而不是反问句。避免机械化的建议和套路化的表达。根据用户的情绪和表达自然地给出理解、共情或建议。特别重要：仔细分析最近30次对话历史的上下文联系，深度理解用户的情绪变化、话题发展和个人特点，让每次回复都体现出对用户深层次的了解和关注。核心要求：保持对整个聊天的话题和走向的大局把握，时刻明白现在聊的具体是什么经历，确保回复与当前话题高度相关且连贯。禁止使用括号内的动作描述。用最自然的方式表达关心，就像朋友间的日常对话。控制在80字以内。'
                     },
-                    body: JSON.stringify({
-                        bot_id: '7504139840985415719',
-                        user_id: userId,
-                        stream: true,
-                        auto_save_history: true,
-                        additional_messages: chatHistory.slice(-MAX_HISTORY)
-                    })
-                });
-
-                if (!response.ok || !response.body) {
-                    throw new Error(`请求失败: ${response.status}`);
+                    ...chatHistory.slice(-MAX_HISTORY)
+                ];
+                
+                // 发送流式请求，添加超时和重试机制
+                const fetchWithTimeout = async (url, options, timeout = 30000) => {
+                    const controller = new AbortController();
+                    const id = setTimeout(() => controller.abort(), timeout);
+                    
+                    try {
+                        const response = await fetch(url, {
+                            ...options,
+                            signal: controller.signal
+                        });
+                        clearTimeout(id);
+                        return response;
+                    } catch (error) {
+                        clearTimeout(id);
+                        throw error;
+                    }
+                };
+                
+                // 尝试最多3次请求
+                let response;
+                let attempts = 0;
+                const maxAttempts = 3;
+                
+                while (attempts < maxAttempts) {
+                    try {
+                        response = await fetchWithTimeout(DEEPSEEK_CONFIG.BASE_URL, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${DEEPSEEK_CONFIG.API_KEY}`,
+                                'Content-Type': 'application/json',
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            },
+                            body: JSON.stringify({
+                                model: DEEPSEEK_CONFIG.MODEL,
+                                messages: messages,
+                                max_tokens: DEEPSEEK_CONFIG.MAX_TOKENS,
+                                temperature: DEEPSEEK_CONFIG.TEMPERATURE,
+                                stream: true
+                            })
+                        }, 30000);
+                        
+                        // 如果请求成功，跳出循环
+                        if (response.ok) break;
+                        
+                        // 如果是服务器错误(5xx)，尝试重试
+                        if (response.status >= 500) {
+                            attempts++;
+                            await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // 递增延迟
+                            continue;
+                        }
+                        
+                        // 其他错误状态码不重试
+                        break;
+                    } catch (error) {
+                        attempts++;
+                        if (attempts >= maxAttempts) throw error;
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // 递增延迟
+                    }
                 }
 
-                const reader = response.body.getReader();
-                const rawResponse = await handleStreamResponse(reader);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`HTTP错误: ${response.status} - ${errorData.error?.message || '请求失败'}`);
+                }
 
+                // 处理流式响应
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullResponse = '';
+                
+                // 显示打字动画
+                showAIBubble('<div class="typing-indicator"><span></span><span></span><span></span></div>');
+                
+                try {
+                    // 设置超时检测，特别是针对移动端网络不稳定的情况
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('请求超时，请检查网络连接')), 30000); // 30秒超时
+                    });
+                    
+                    // 移除心跳检测，简化代码
+                    
+                    // 读取流数据
+                    const readStreamPromise = (async () => {
+                        let retryCount = 0;
+                        const maxRetries = 2; // 最多重试2次
+                        
+                        while (true) {
+                            try {
+                                const { done, value } = await reader.read();
+                                if (done) break;
+                                
+                                retryCount = 0; // 成功读取后重置重试计数
+
+                                buffer += decoder.decode(value, { stream: true });
+                                const lines = buffer.split('\n');
+                                buffer = lines.pop() || ''; // 保留最后一个不完整的行
+
+                            for (const line of lines) {
+                                const trimmed = line.trim();
+                                if (!trimmed || trimmed === 'data: [DONE]') continue;
+
+                                if (trimmed.startsWith('data: ')) {
+                                    try {
+                                        const json = JSON.parse(trimmed.slice(6));
+                                        if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
+                                            fullResponse += json.choices[0].delta.content;
+                                            showAIBubble(processContent(fullResponse));
+                                            ensureScrollToBottom();
+                                        }
+                                    } catch (error) {
+                                        console.error('解析流数据错误:', error);
+                                        // 继续处理，不中断流
+                                    }
+                                }
+                            }
+                            } catch (readError) {
+                                console.error('读取流时发生错误:', readError);
+                                
+                                // 如果是网络错误，尝试恢复连接
+                                if (readError.name === 'NetworkError' || readError.message.includes('network') ||
+                                    readError.message.includes('fetch') || readError.message.includes('connection')) {
+                                    
+                                    retryCount++;
+                                    if (retryCount <= maxRetries) {
+                                        console.log(`尝试恢复连接，第${retryCount}次重试...`);
+                                        // 短暂延迟后重试
+                                        await new Promise(resolve => setTimeout(resolve, 1000));
+                                        continue; // 继续循环，重新尝试读取
+                                    }
+                                }
+                                
+                                // 超过重试次数或非网络错误，抛出以便外层捕获
+                                throw readError;
+                            }
+                        }
+                        return fullResponse;
+                    })();
+                    
+                    // 使用Promise.race来处理超时情况
+                    await Promise.race([readStreamPromise, timeoutPromise]);
+                    
+                } catch (error) {
+                    console.error('流处理错误:', error);
+                    
+                    // 获取网络状态
+                    const networkStatus = checkNetworkStatus();
+                    
+                    // 显示友好的错误信息
+                    if (error.message.includes('超时')) {
+                        showErrorMessage(0, '请求超时，请检查网络连接');
+                    } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                        // 根据网络状态提供更精确的错误信息
+                        if (isMobileDevice()) {
+                            if (networkStatus.type === 'cellular') {
+                                if (networkStatus.effectiveType === '2g' || networkStatus.effectiveType === 'slow-2g') {
+                                    showErrorMessage(0, '当前移动网络信号较弱，请尝试切换到WiFi或移动到信号更好的位置');
+                                } else if (networkStatus.downlink < 1) {
+                                    showErrorMessage(0, '移动网络连接速度较慢，请尝试使用WiFi或稍后再试');
+                                } else {
+                                    showErrorMessage(0, '移动网络连接不稳定，请尝试使用WiFi或稍后再试');
+                                }
+                            } else {
+                                showErrorMessage(0, '网络连接错误，请检查您的网络连接并重试');
+                            }
+                        } else {
+                            showErrorMessage(0, '网络连接错误，请检查您的网络连接并重试');
+                        }
+                    } else if (error.name === 'AbortError') {
+                        showErrorMessage(0, '请求被中断，可能是网络连接断开，请检查网络后重试');
+                    } else if (error.name === 'NetworkError' || error.message.includes('network')) {
+                        if (isMobileDevice()) {
+                            showErrorMessage(0, '网络连接不稳定，请检查移动网络信号或切换到WiFi');
+                        } else {
+                            showErrorMessage(0, '网络连接不稳定，请检查您的网络连接并重试');
+                        }
+                    } else {
+                        showErrorMessage(0, `流处理错误: ${error.message}`);
+                    }
+                    
+                    // 如果有部分响应，尝试保存
+                    if (fullResponse.length > 0) {
+                        console.log('尽管发生错误，但已接收部分响应:', fullResponse.length, '字符');
+                        // 可以选择保存部分响应
+                        if (fullResponse.length > 20) { // 只有当响应足够长时才保存
+                            showAIBubble(processContent(fullResponse) + 
+                                '<div class="network-warning"><i class="fas fa-wifi"></i> 网络中断，显示的是部分回复</div>');
+                        }
+                    }
+                    
+                    throw error;
+                } finally {
+                    // 心跳检测已移除
+                }
+                
                 const aiNow = new Date();
-                // 修复：将智能体回复保存到历史记录
-                chatHistory.push({ role: 'assistant', content: rawResponse, time: aiNow.toISOString() });
+                
+                // 将AI回复添加到聊天历史
+                chatHistory.push({ role: 'assistant', content: fullResponse, time: aiNow.toISOString() });
                 localStorage.setItem(`chatHistory_${userId}`, JSON.stringify(chatHistory.slice(-MAX_HISTORY)));
-                addToHistory(processContent(rawResponse), 'agent', aiNow.toISOString());
+                
+                // 添加到聊天历史显示
+                addToHistory(processContent(fullResponse), 'agent', aiNow.toISOString());
 
             } catch (error) {
-                showAIBubble(`请求失败: ${error.message}`);
-                addToHistory(`请求失败: ${error.message}`, 'error');
+                // 使用更友好的错误提示
+                showErrorMessage(1, error.message);
             } finally {
                 setButtonState(true);
                 elements.input.focus();
             }
         });
+        
+        // 显示错误消息的函数
+          function showErrorMessage(errorType, errorMsg) {
+              // 清除打字动画
+              showAIBubble('');
+              
+              // 错误类型：0-流处理错误，1-请求错误
+              let friendlyMessage = '';
+              let errorHtml = '';
+              
+              // 获取网络状态
+              const networkStatus = checkNetworkStatus();
+              
+              // 根据错误类型和消息内容提供友好的错误提示
+              if (errorMsg.includes('API key')) {
+                  friendlyMessage = '系统暂时无法连接到AI服务，请稍后再试';
+              } else if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
+                  if (isMobileDevice()) {
+                      // 根据移动设备的网络类型提供更精确的提示
+                      if (networkStatus.type === 'cellular') {
+                          // 移动数据连接
+                          if (networkStatus.effectiveType === '2g' || networkStatus.effectiveType === 'slow-2g') {
+                              friendlyMessage = '当前移动网络信号较弱，请尝试切换到WiFi或移动到信号更好的位置';
+                          } else if (networkStatus.downlink < 1) {
+                              friendlyMessage = '移动网络连接速度较慢，请尝试使用WiFi或稍后再试';
+                          } else {
+                              friendlyMessage = '移动网络连接不稳定，请尝试使用WiFi或稍后再试';
+                          }
+                      } else if (networkStatus.type === 'wifi' && networkStatus.downlink < 1) {
+                          friendlyMessage = '当前WiFi连接不稳定，请检查网络信号或稍后再试';
+                      } else {
+                          friendlyMessage = '网络连接错误，请检查您的网络连接并重试';
+                      }
+                  } else {
+                      friendlyMessage = '网络连接错误，请检查您的网络连接并重试';
+                  }
+              } else if (errorMsg.includes('超时')) {
+                  if (isMobileDevice() && networkStatus.type === 'cellular') {
+                      friendlyMessage = '请求超时，移动网络可能不稳定，请尝试使用WiFi或稍后再试';
+                  } else {
+                      friendlyMessage = '请求超时，请检查网络连接并重试';
+                  }
+              } else {
+                  friendlyMessage = `请求失败: ${errorMsg}`;
+              }
+              
+              // 创建错误消息HTML
+              errorHtml = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> ${friendlyMessage}</div>`;
+              
+              // 添加到聊天历史
+              showAIBubble(errorHtml);
+              addToHistory(errorHtml, 'error');
+              
+              // 记录错误信息到控制台，便于调试
+              console.log('错误详情:', {
+                  errorType,
+                  errorMsg,
+                  networkStatus,
+                  isMobile: isMobileDevice()
+              });
+          }
 
         elements.input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !elements.sendBtn.disabled) {
@@ -1521,31 +2773,25 @@
             const options = {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'Bearer sk-xiyaxdznsnnovbjpswshoenytyfatnyhpcnpyzfckopoyclq',
+                    'Authorization': `Bearer ${DEEPSEEK_CONFIG.API_KEY}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: "Qwen/Qwen2.5-VL-72B-Instruct",
-                    stream: false,
-                    max_tokens: 512,
-                    enable_thinking: true,
-                    thinking_budget: 4096,
-                    min_p:  0.05,
-                    temperature: 0.7,
-                    top_p: 0.7,
-                    top_k: 50,
-                    frequency_penalty: 0.5,
-                    n: 1,
-                    stop: [],
+                    model: DEEPSEEK_CONFIG.MODEL,
                     messages: [
-                        { role: "system", content: "请对以下用户对话内容进行六维情绪分析，输出每种情绪的分数（范围0~1），情绪维度为：开心(happy)、悲伤(sad)、愤怒(angry)、平静(calm)、惊讶(surprised)、恐惧(fear)。只返回JSON对象，格式如：{\"happy\":0.2,\"sad\":0.1,\"angry\":0.1,\"calm\":0.3,\"surprised\":0.2,\"fear\":0.1}" },
+                        { 
+                            role: "system", 
+                            content: "请对以下用户对话内容进行六维情绪分析，输出每种情绪的分数（范围0~1），情绪维度为：开心(happy)、悲伤(sad)、愤怒(angry)、平静(calm)、惊讶(surprised)、恐惧(fear)。只返回JSON对象，格式如：{\"happy\":0.2,\"sad\":0.1,\"angry\":0.1,\"calm\":0.3,\"surprised\":0.2,\"fear\":0.1}" 
+                        },
                         { role: "user", content: text }
-                    ]
+                    ],
+                    max_tokens: DEEPSEEK_CONFIG.MAX_TOKENS,
+                    temperature: DEEPSEEK_CONFIG.TEMPERATURE
                 })
             };
 
             try {
-                const res = await fetch('https://api.siliconflow.cn/v1/chat/completions', options);
+                const res = await fetch(DEEPSEEK_CONFIG.BASE_URL, options);
                 const data = await res.json();
                 let emo = { happy: 0, sad: 0, angry: 0, calm: 0, surprised: 0, fear: 0 };
                 if (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
@@ -1769,80 +3015,914 @@
     </script>
 
 <script>
-    // 初始化 PIXI Application
-    const app = new PIXI.Application({
-        view: document.getElementById('live2d-canvas'),
-        transparent: true,
-        autoStart: true,
-        width: window.innerWidth,
-        height: window.innerHeight
+    // 窗口大小调整事件
+    window.addEventListener('resize', () => {
+        // 调整静态图片容器的位置（如果需要）
+        // 这里可以添加任何需要在窗口大小变化时执行的代码
     });
 
-    // 设置全局变量
-    window.PIXI = PIXI;
-    window.Live2DCubismCore = Live2DCubismCore;
+    // 心理日记功能
+    document.getElementById('psychologyDiaryBtn').onclick = function() {
+        generatePsychologyDiary();
+    };
 
-    // 初始化 Cubism Framework
-    async function initCubism() {
-        const option = new Option();
-        option.logFunction = console.log;
-        option.errorFunction = console.error;
+    document.getElementById('closeDiaryBtn').onclick = function() {
+        document.getElementById('psychologyDiaryModal').style.display = 'none';
+    };
+
+    document.getElementById('saveDiaryBtn').onclick = function() {
+        saveDiary();
+    };
+
+    document.getElementById('exportDiaryBtn').onclick = function() {
+        exportDiary();
+    };
+
+    // 生成心理日记
+    async function generatePsychologyDiary() {
+        const modal = document.getElementById('psychologyDiaryModal');
+        const summaryDiv = document.getElementById('diaryConversationSummary');
+        const emotionDiv = document.getElementById('diaryCoreEmotion');
         
-        // 初始化 Cubism Framework
-        await PIXI.live2d.CubismFramework.startUp(option);
-        await PIXI.live2d.CubismFramework.initialize();
-    }
-
-    // 加载模型
-    async function loadModel() {
+        // 显示悬浮窗
+        modal.style.display = 'flex';
+        
+        // 重置内容
+        summaryDiv.innerHTML = '正在分析最近的对话内容...';
+        emotionDiv.innerHTML = '<span class="emotion-tag">分析中...</span>';
+        
         try {
-            // 等待 Cubism Framework 初始化完成
-            await initCubism();
-
-            // 设置模型路径
-            const modelPath = '萨摩耶小狗/萨摩耶小狗.model3.json';
+            // 获取最近的对话内容（最近10条）
+            const recentChats = chatHistory.slice(-10);
             
-            // 创建模型
-            const model = await PIXI.live2d.Live2DModel.from(modelPath, {
-                autoInteract: false,
-                motionPreload: 'NONE',
-                idleMotionGroup: 'Idle'
+            if (recentChats.length === 0) {
+                summaryDiv.innerHTML = '暂无对话内容可分析';
+                emotionDiv.innerHTML = '<span class="emotion-tag">无数据</span>';
+                return;
+            }
+            
+            // 构建对话文本
+            const conversationText = recentChats.map(chat => {
+                const role = chat.role === 'user' ? '用户' : '助手';
+                return `${role}: ${chat.content}`;
+            }).join('\n');
+            
+            // 调用AI分析对话内容
+            const analysisPrompt = `请分析以下心理陪伴对话内容，生成一份心理日记总结：
+
+${conversationText}
+
+请按以下格式回复：
+1. 对话总结：（用2-3句话总结今天的对话主要内容和用户的状态）
+2. 核心情绪：（只能使用这些基础情绪词：开心,难过,焦虑,平静,疲惫,希望,愤怒,恐惧,惊讶,兴奋,失望,满足,紧张,放松,孤独,温暖）
+
+严格要求：
+- 核心情绪必须从上述16个基础词汇中选择，不超过3个
+- 绝对禁止使用复杂词汇、英文词汇或心理学术语
+- 用逗号分隔多个情绪词
+请用温暖、专业的语气回复。`;
+            
+            const response = await fetch(DEEPSEEK_CONFIG.BASE_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${DEEPSEEK_CONFIG.API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: DEEPSEEK_CONFIG.MODEL,
+                    messages: [{
+                        role: 'user',
+                        content: analysisPrompt
+                    }],
+                    max_tokens: 500,
+                    temperature: 0.7,
+                    stream: false
+                })
             });
-
-            // 调整模型大小和位置
-            const scale = 0.3;
-            model.scale.set(scale);
-            model.x = app.screen.width / 2-220;
-            model.y = app.screen.height / 2-280;
-
-            // 添加到舞台
-            app.stage.addChild(model);
-
-            // 启用交互
-            model.buttonMode = true;
-            model.interactive = true;
-            model.on('pointerdown', () => {
-                try {
-                    model.motion('TapBody');
-                } catch (e) {
-                    console.log('TapBody motion not found');
+            
+            if (!response.ok) {
+                throw new Error('分析请求失败');
+            }
+            
+            const data = await response.json();
+            const analysisResult = data.choices[0].message.content;
+            
+            // 解析分析结果
+            const lines = analysisResult.split('\n');
+            let summary = '';
+            let emotions = [];
+            
+            for (let line of lines) {
+                if (line.includes('对话总结') || line.includes('总结')) {
+                    summary = line.replace(/^\d+\.\s*对话总结[：:]/i, '').trim();
+                } else if (line.includes('核心情绪') || line.includes('情绪')) {
+                    const emotionText = line.replace(/^\d+\.\s*核心情绪[：:]/i, '').trim();
+                    emotions = emotionText.split(/[,，、]/).map(e => e.trim()).filter(e => e);
                 }
-            });
-
-            // 自动适应窗口大小
-            window.addEventListener('resize', () => {
-                app.renderer.resize(window.innerWidth, window.innerHeight);
-                model.x = app.screen.width / 2;
-                model.y = app.screen.height / 2;
-            });
-
+            }
+            
+            // 如果解析失败，使用整个回复作为总结
+            if (!summary) {
+                summary = analysisResult;
+            }
+            
+            // 更新UI
+            summaryDiv.innerHTML = summary || '今天的对话内容丰富，体现了您的内心状态和情感需求。';
+            
+            if (emotions.length > 0) {
+                emotionDiv.innerHTML = emotions.map(emotion => 
+                    `<span class="emotion-tag">${emotion}</span>`
+                ).join('');
+            } else {
+                emotionDiv.innerHTML = '<span class="emotion-tag">平静</span>';
+            }
+            
         } catch (error) {
-            console.error('模型加载失败:', error);
+            console.error('生成心理日记失败:', error);
+            summaryDiv.innerHTML = '分析失败，请稍后重试';
+            emotionDiv.innerHTML = '<span class="emotion-tag">分析失败</span>';
         }
     }
 
-    // 页面加载完成后加载模型
-    window.addEventListener('load', loadModel);
+    // 保存日记
+    function saveDiary() {
+        const summary = document.getElementById('diaryConversationSummary').innerText;
+        const emotions = Array.from(document.querySelectorAll('#diaryCoreEmotion .emotion-tag'))
+            .map(tag => tag.innerText).join(', ');
+        const thoughts = document.getElementById('diaryPersonalThoughts').value;
+        
+        const diary = {
+            date: new Date().toISOString().split('T')[0],
+            timestamp: new Date().toISOString(),
+            summary: summary,
+            emotions: emotions,
+            personalThoughts: thoughts
+        };
+        
+        // 保存到本地存储
+        const savedDiaries = JSON.parse(localStorage.getItem('psychologyDiaries') || '[]');
+        savedDiaries.push(diary);
+        localStorage.setItem('psychologyDiaries', JSON.stringify(savedDiaries));
+        
+        alert('日记保存成功！');
+    }
+
+    // 导出日记
+    function exportDiary() {
+        const summary = document.getElementById('diaryConversationSummary').innerText;
+        const emotions = Array.from(document.querySelectorAll('#diaryCoreEmotion .emotion-tag'))
+            .map(tag => tag.innerText).join(', ');
+        const thoughts = document.getElementById('diaryPersonalThoughts').value;
+        
+        const today = new Date().toLocaleDateString('zh-CN');
+        const diaryContent = `心理日记 - ${today}
+
+` +
+            `今日对话总结：
+${summary}
+
+` +
+            `核心情绪：${emotions}
+
+` +
+            `个人感悟：
+${thoughts || '暂无记录'}
+
+` +
+            `生成时间：${new Date().toLocaleString('zh-CN')}`;
+        
+        // 创建下载链接
+        const blob = new Blob([diaryContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `心理日记_${today.replace(/\//g, '-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 情绪收集罐数据
+    let emotionJarEmojis = [];
+    
+    // 初始化情绪罐子
+    function initEmotionJar() {
+        const emotionDisplay = document.getElementById('emotionDisplay');
+        const emptyMessage = document.getElementById('jarEmptyMessage');
+        
+        if (!emotionDisplay) {
+            console.error('情绪显示容器未找到');
+            return;
+        }
+        
+        // 清空现有内容（保留空消息）
+        const existingEmojis = emotionDisplay.querySelectorAll('.emotion-emoji');
+        existingEmojis.forEach(emoji => emoji.remove());
+        
+        // 重置数据
+        emotionJarEmojis = [];
+        
+        // 显示空消息
+        if (emptyMessage) {
+            emptyMessage.style.display = 'block';
+        }
+        
+        console.log('情绪收集罐初始化完成');
+    }
+    
+    // 选中的情绪列表
+    let selectedEmotions = [];
+    
+    // 显示情绪选择器
+    function showEmotionSelector() {
+        const overlay = document.getElementById('emotionSelectorOverlay');
+        const selector = document.getElementById('emotionSelector');
+        
+        overlay.style.display = 'block';
+        selector.style.display = 'block';
+        
+        // 重置选择状态
+        selectedEmotions = [];
+        document.querySelectorAll('.emotion-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+    }
+    
+    // 隐藏情绪选择器
+    function hideEmotionSelector() {
+        const overlay = document.getElementById('emotionSelectorOverlay');
+        const selector = document.getElementById('emotionSelector');
+        
+        overlay.style.display = 'none';
+        selector.style.display = 'none';
+    }
+    
+    // 添加指定emoji到罐子
+    function addSpecificEmotionToJar(emoji) {
+        const emotionDisplay = document.getElementById('emotionDisplay');
+        const emptyMessage = document.getElementById('jarEmptyMessage');
+        
+        if (!emotionDisplay) {
+            console.error('情绪显示容器未找到');
+            return;
+        }
+        
+        // 隐藏空消息
+        if (emptyMessage) {
+            emptyMessage.style.display = 'none';
+        }
+        
+        // 创建emoji元素
+        const emojiElement = document.createElement('div');
+        emojiElement.className = 'emotion-emoji';
+        emojiElement.textContent = emoji;
+        emojiElement.title = `点击移除这个情绪: ${emoji}`;
+        
+        // 添加点击移除功能
+        emojiElement.addEventListener('click', function() {
+            removeEmotionFromJar(this);
+        });
+        
+        // 添加到显示容器
+        emotionDisplay.appendChild(emojiElement);
+        
+        // 添加到数据数组
+        emotionJarEmojis.push({
+            emoji: emoji,
+            element: emojiElement,
+            timestamp: Date.now()
+        });
+        
+        console.log(`添加了emoji: ${emoji}, 当前总数: ${emotionJarEmojis.length}`);
+    }
+    
+    // 从罐子中移除指定emoji
+    function removeEmotionFromJar(emojiElement) {
+        const emotionDisplay = document.getElementById('emotionDisplay');
+        const emptyMessage = document.getElementById('jarEmptyMessage');
+        
+        // 添加移除动画
+        emojiElement.style.animation = 'none';
+        emojiElement.style.transform = 'scale(0) rotate(360deg)';
+        emojiElement.style.opacity = '0';
+        emojiElement.style.transition = 'all 0.3s ease';
+        
+        setTimeout(() => {
+            // 从DOM中移除
+            if (emojiElement.parentNode) {
+                emojiElement.parentNode.removeChild(emojiElement);
+            }
+            
+            // 从数据数组中移除
+            emotionJarEmojis = emotionJarEmojis.filter(item => item.element !== emojiElement);
+            
+            // 如果没有emoji了，显示空消息
+            if (emotionJarEmojis.length === 0 && emptyMessage) {
+                emptyMessage.style.display = 'block';
+            }
+        }, 300);
+    }
+    
+    // 添加随机情绪emoji到罐子
+    function addRandomEmotionToJar() {
+        const emotions = ['😊', '😢', '😠', '😌', '😲', '😨', '😴', '🤔', '😅', '😭', '😤', '🥺'];
+        const randomEmoji = emotions[Math.floor(Math.random() * emotions.length)];
+        addSpecificEmotionToJar(randomEmoji);
+    }
+    
+    // 清空罐子
+    function clearEmotionJar() {
+        const emotionDisplay = document.getElementById('emotionDisplay');
+        const emptyMessage = document.getElementById('jarEmptyMessage');
+        
+        if (!emotionDisplay) return;
+        
+        // 为所有emoji添加消失动画
+        const emojiElements = emotionDisplay.querySelectorAll('.emotion-emoji');
+        emojiElements.forEach((element, index) => {
+            setTimeout(() => {
+                element.style.animation = 'none';
+                element.style.transform = 'scale(0) rotate(720deg)';
+                element.style.opacity = '0';
+                element.style.transition = 'all 0.4s ease';
+                
+                setTimeout(() => {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                }, 400);
+            }, index * 50); // 错开动画时间
+        });
+        
+        // 清空数据
+        emotionJarEmojis = [];
+        
+        // 延迟显示空消息
+        setTimeout(() => {
+            if (emptyMessage && emotionJarEmojis.length === 0) {
+                emptyMessage.style.display = 'block';
+            }
+        }, emojiElements.length * 50 + 400);
+        
+        console.log('情绪收集罐已清空');
+    }
+    
+    // 绑定按钮事件
+    document.getElementById('addEmotionBtn').onclick = showEmotionSelector;
+    document.getElementById('clearJarBtn').onclick = clearEmotionJar;
+    document.getElementById('statsBtn').onclick = showEmotionStats;
+    document.getElementById('aiSummaryBtn').onclick = generateAISummary;
+    
+    // 绑定情绪选择器事件
+    document.addEventListener('DOMContentLoaded', function() {
+        // 情绪选项点击事件
+        document.querySelectorAll('.emotion-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const emoji = this.dataset.emoji;
+                const name = this.dataset.name;
+                
+                if (this.classList.contains('selected')) {
+                    // 取消选择
+                    this.classList.remove('selected');
+                    selectedEmotions = selectedEmotions.filter(e => e.emoji !== emoji);
+                } else {
+                    // 添加选择
+                    this.classList.add('selected');
+                    selectedEmotions.push({ emoji, name });
+                }
+            });
+        });
+        
+        // 确认按钮
+        document.getElementById('confirmEmotionBtn').addEventListener('click', function() {
+            if (selectedEmotions.length === 0) {
+                alert('请至少选择一个情绪！');
+                return;
+            }
+            
+            // 添加选中的情绪到罐子
+            selectedEmotions.forEach((emotion, index) => {
+                setTimeout(() => {
+                    addSpecificEmotionToJar(emotion.emoji);
+                }, index * 200);
+            });
+            
+            hideEmotionSelector();
+        });
+        
+        // 取消按钮
+        document.getElementById('cancelEmotionBtn').addEventListener('click', hideEmotionSelector);
+        
+        // 点击遮罩层关闭
+        document.getElementById('emotionSelectorOverlay').addEventListener('click', hideEmotionSelector);
+    });
+    
+    // 情绪统计功能
+    function showEmotionStats() {
+        if (emotionJarEmojis.length === 0) {
+            showStatsModal('情绪收集罐为空', '请先添加一些情绪到收集罐中，然后再查看统计数据。');
+            return;
+        }
+        
+        // 统计各种情绪的数量
+        const emotionCounts = {};
+        const emotionNames = {
+            '😊': '开心', '😢': '难过', '😡': '愤怒', '😌': '平静', '😮': '惊讶',
+            '😨': '恐惧', '😴': '疲惫', '🤔': '思考', '😒': '不满', '🥺': '委屈'
+        };
+        
+        emotionJarEmojis.forEach(item => {
+            const emoji = item.emoji;
+            emotionCounts[emoji] = (emotionCounts[emoji] || 0) + 1;
+        });
+        
+        // 按数量排序
+        const sortedEmotions = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1]);
+        
+        // 时间分析
+        const now = new Date();
+        const recent24h = emotionJarEmojis.filter(item => {
+            const timeDiff = now - item.timestamp;
+            return timeDiff < 24 * 60 * 60 * 1000;
+        });
+        
+        const recent7d = emotionJarEmojis.filter(item => {
+            const timeDiff = now - item.timestamp;
+            return timeDiff < 7 * 24 * 60 * 60 * 1000;
+        });
+        
+        // 生成HTML内容
+        let statsHTML = `
+            <div class="stats-overview">
+                <div class="stats-card">
+                    <div class="stats-number">${emotionJarEmojis.length}</div>
+                    <div class="stats-label">总情绪数</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">${recent24h.length}</div>
+                    <div class="stats-label">24小时内</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">${recent7d.length}</div>
+                    <div class="stats-label">7天内</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">${sortedEmotions.length}</div>
+                    <div class="stats-label">情绪类型</div>
+                </div>
+            </div>
+            
+            <div class="emotion-distribution">
+                <h4>情绪分布</h4>
+                <div class="emotion-bars">
+        `;
+        
+        sortedEmotions.forEach(([emoji, count]) => {
+            const name = emotionNames[emoji] || '未知';
+            const percentage = ((count / emotionJarEmojis.length) * 100).toFixed(1);
+            statsHTML += `
+                <div class="emotion-bar-item">
+                    <div class="emotion-info">
+                        <span class="emotion-emoji">${emoji}</span>
+                        <span class="emotion-name">${name}</span>
+                        <span class="emotion-count">${count}次 (${percentage}%)</span>
+                    </div>
+                    <div class="emotion-bar">
+                        <div class="emotion-bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        statsHTML += `
+                </div>
+            </div>
+        `;
+        
+        showStatsModal('📊 情绪统计报告', statsHTML);
+    }
+    
+    // 显示统计弹窗
+    function showStatsModal(title, content) {
+        // 先移除已存在的模态框
+        const existingModal = document.getElementById('statsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // 创建弹窗HTML
+        const modalHTML = `
+            <div id="statsModal" class="stats-modal">
+                <div class="stats-modal-content">
+                    <div class="stats-modal-header">
+                        <h3>${title}</h3>
+                        <span class="stats-modal-close">✕</span>
+                    </div>
+                    <div class="stats-modal-body">
+                        ${content}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 添加到页面
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // 使用setTimeout确保DOM完全渲染后再绑定事件
+        setTimeout(() => {
+            const modal = document.getElementById('statsModal');
+            const closeBtn = modal ? modal.querySelector('.stats-modal-close') : null;
+            
+            console.log('模态框元素:', modal);
+            console.log('关闭按钮元素:', closeBtn);
+            
+            // 关闭函数
+            const closeModal = () => {
+                console.log('执行关闭模态框');
+                const modalToClose = document.getElementById('statsModal');
+                if (modalToClose && modalToClose.parentNode) {
+                    modalToClose.remove();
+                }
+            };
+            
+            // 关闭按钮点击事件
+            if (closeBtn) {
+                // 移除可能存在的旧事件监听器
+                closeBtn.onclick = null;
+                
+                // 使用onclick属性直接绑定
+                closeBtn.onclick = function(e) {
+                    console.log('关闭按钮被点击');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeModal();
+                    return false;
+                };
+                
+                // 同时使用addEventListener作为备用
+                closeBtn.addEventListener('click', function(e) {
+                    console.log('addEventListener: 关闭按钮被点击');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeModal();
+                }, true);
+                
+                // 添加调试样式确保按钮可见
+                closeBtn.style.zIndex = '99999';
+                closeBtn.style.pointerEvents = 'auto';
+                closeBtn.style.cursor = 'pointer';
+            }
+            
+            // 背景点击关闭
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                });
+                
+                // 确保模态框获得焦点以便ESC键工作
+                modal.focus();
+            }
+            
+            // ESC键关闭
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }, 100);
+    }
+    
+    // AI情绪总结功能
+    async function generateAISummary() {
+        if (emotionJarEmojis.length === 0) {
+            showStatsModal('情绪收集罐为空', '请先添加一些情绪到收集罐中，然后再生成AI总结。');
+            return;
+        }
+        
+        // 显示加载状态
+        showStatsModal('🤖 AI分析中...', '<div class="ai-loading"><div class="loading-spinner"></div><p>正在分析您的情绪数据，请稍候...</p></div>');
+        
+        // 模拟AI分析延迟
+        setTimeout(() => {
+            // 准备情绪数据
+            const emotionData = emotionJarEmojis.map(item => ({
+                emoji: item.emoji,
+                timestamp: new Date(item.timestamp).toLocaleString()
+            }));
+            
+            // 生成AI分析结果
+            const analysis = generateDetailedAIAnalysis(emotionData);
+            
+            // 生成简单清单形式的HTML内容
+            const summaryHTML = `
+                <div class="ai-summary-list">
+                    <h4>📊 情绪数据概览</h4>
+                    <ul class="summary-checklist">
+                        <li>总计记录：${emotionJarEmojis.length} 条情绪</li>
+                        <li>主导情绪：${analysis.dominantEmotion.name} (${analysis.dominantEmotion.percentage}%)</li>
+                        <li>记录天数：${analysis.daySpan} 天</li>
+                    </ul>
+                    
+                    <h4>🧠 AI智能分析</h4>
+                    <ul class="summary-checklist">
+                        <li>${analysis.summary}</li>
+                    </ul>
+                    
+                    <h4>📈 情绪趋势</h4>
+                    <ul class="summary-checklist">
+                        ${analysis.trends.map(trend => `
+                            <li>${trend.name}：${trend.direction === 'up' ? '上升' : '下降'} ${trend.change}</li>
+                        `).join('')}
+                    </ul>
+                    
+                    <h4>💡 个性化建议</h4>
+                    <ul class="summary-checklist">
+                        ${analysis.recommendations.map(rec => `
+                            <li>${rec.text}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            // 移除加载弹窗并显示结果
+            document.getElementById('statsModal')?.remove();
+            showStatsModal('🤖 AI情绪分析报告', summaryHTML);
+        }, 2000); // 模拟2秒分析时间
+    }
+    
+    // 生成详细的AI分析报告
+    function generateDetailedAIAnalysis(emotionData) {
+        const emotionCounts = {};
+        const emotionNames = {
+            '😊': '开心', '😢': '难过', '😡': '愤怒', '😌': '平静', '😮': '惊讶',
+            '😨': '恐惧', '😴': '疲惫', '🤔': '思考', '😒': '不满', '🥺': '委屈'
+        };
+        
+        emotionData.forEach(item => {
+            emotionCounts[item.emoji] = (emotionCounts[item.emoji] || 0) + 1;
+        });
+        
+        const totalEmotions = emotionData.length;
+        const sortedEmotions = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1]);
+        const dominantEmotion = sortedEmotions[0];
+        
+        // 计算时间跨度
+        const timestamps = emotionData.map(item => new Date(item.timestamp));
+        const earliestDate = new Date(Math.min(...timestamps));
+        const latestDate = new Date(Math.max(...timestamps));
+        const daySpan = Math.max(1, Math.ceil((latestDate - earliestDate) / (1000 * 60 * 60 * 24)));
+        
+        // 生成情绪趋势（模拟）
+        const trends = sortedEmotions.slice(0, 3).map((emotion, index) => {
+            const [emoji, count] = emotion;
+            const name = emotionNames[emoji] || '未知';
+            const directions = ['up', 'down', 'up'];
+            const changes = ['15%', '8%', '12%'];
+            return {
+                emoji,
+                name,
+                direction: directions[index],
+                change: changes[index]
+            };
+        });
+        
+        // 生成个性化建议
+        const recommendations = generateRecommendations(dominantEmotion, emotionCounts, totalEmotions);
+        
+        // 生成AI分析文本
+        const summary = generateAISummaryText(dominantEmotion, totalEmotions, daySpan, emotionCounts);
+        
+        return {
+            dominantEmotion: {
+                emoji: dominantEmotion[0],
+                name: emotionNames[dominantEmotion[0]],
+                count: dominantEmotion[1],
+                percentage: ((dominantEmotion[1] / totalEmotions) * 100).toFixed(1)
+            },
+            daySpan,
+            trends,
+            recommendations,
+            summary
+        };
+    }
+    
+    // 生成个性化建议
+    function generateRecommendations(dominantEmotion, emotionCounts, totalEmotions) {
+        const [emoji, count] = dominantEmotion;
+        const percentage = (count / totalEmotions) * 100;
+        
+        const recommendations = [];
+        
+        if (emoji === '😊' && percentage > 50) {
+            recommendations.push(
+                { text: '保持积极心态，继续做让您开心的事情' },
+                { text: '分享您的快乐，帮助身边的人也感受正能量' },
+                { text: '记录下让您开心的时刻和原因' }
+            );
+        } else if (emoji === '😢' && percentage > 30) {
+            recommendations.push(
+                { text: '寻求朋友或家人的支持和陪伴' },
+                { text: '尝试冥想或深呼吸来缓解情绪' },
+                { text: '听一些舒缓的音乐来调节心情' }
+            );
+        } else if (emoji === '😡' && percentage > 25) {
+            recommendations.push(
+                { text: '通过运动来释放负面情绪' },
+                { text: '找出愤怒的根源，理性分析问题' },
+                { text: '与信任的人交流，表达您的感受' }
+            );
+        } else {
+            recommendations.push(
+                { text: '继续记录情绪，观察自己的情绪模式' },
+                { text: '保持情绪平衡，适当调节生活节奏' },
+                { text: '培养情绪管理技能，提升心理韧性' }
+            );
+        }
+        
+        return recommendations;
+    }
+    
+    // 生成AI分析文本
+    function generateAISummaryText(dominantEmotion, totalEmotions, daySpan, emotionCounts) {
+        const [emoji, count] = dominantEmotion;
+        const percentage = ((count / totalEmotions) * 100).toFixed(1);
+        
+        const emotionAnalysis = {
+            '😊': '您最近的心情整体比较积极乐观，这是很好的心理状态。建议继续保持这种正面的情绪，同时也要关注其他情绪的变化。',
+            '😢': '您最近可能经历了一些让您感到难过的事情。这是正常的情绪反应，建议适当放松，寻求支持，给自己一些时间来处理这些情绪。',
+            '😡': '您最近的愤怒情绪较多，这可能表明您正在面临一些挑战或压力。建议通过健康的方式来释放这些情绪，如运动、深呼吸或与人交流。',
+            '😌': '您的心态比较平和，这种内心的宁静很珍贵。这表明您有良好的情绪调节能力，建议继续保持这种平衡状态。',
+            '😮': '您最近可能遇到了很多意外或新鲜的事情。保持好奇心是好的，同时也要注意适应变化，给自己时间来处理新信息。',
+            '😨': '您可能面临一些让您感到担忧的情况。恐惧是保护机制，但过度的恐惧可能影响生活质量。建议寻求帮助或专业指导。',
+            '😴': '您最近可能比较疲惫，这可能是身体或心理压力的表现。注意休息和调整作息，确保有足够的睡眠和放松时间。',
+            '🤔': '您是一个善于思考的人，这是很好的品质。但也要注意不要过度纠结，有时候适当的行动比过度思考更有效。',
+            '😒': '您最近可能对一些事情感到不满。这种情绪提醒您需要改变，试着寻找积极的解决方案，或者调整自己的期望。',
+            '🥺': '您最近可能感到有些委屈。记住您的感受是有效的，值得被理解。不要压抑这些情绪，适当表达出来会更健康。'
+        };
+        
+        let summary = `根据您在过去${daySpan}天的情绪记录分析，您共记录了${totalEmotions}次情绪体验。`;
+        summary += `其中${emoji}情绪出现最频繁，占${percentage}%。`;
+        summary += (emotionAnalysis[emoji] || '这种情绪状态需要您多加关注。');
+        
+        // 添加多样性分析
+        const emotionTypes = Object.keys(emotionCounts).length;
+        if (emotionTypes >= 5) {
+            summary += ' 您的情绪体验比较丰富多样，这表明您对自己的情绪有较好的觉察能力。';
+        } else if (emotionTypes <= 2) {
+            summary += ' 您记录的情绪类型相对较少，可以尝试更细致地观察和记录不同的情绪体验。';
+        }
+        
+        summary += ' 继续保持情绪记录的习惯，这有助于更好地了解和管理自己的情绪状态。';
+        
+        return summary;
+    }
+    
+    // 当情绪日历显示时初始化罐子
+    const originalGenerateEmotionCalendar = generateEmotionCalendar;
+    generateEmotionCalendar = async function() {
+        await originalGenerateEmotionCalendar();
+        setTimeout(() => {
+            if (document.getElementById('emotionCalendar').style.display === 'block') {
+                initEmotionJar();
+                // 自动添加一些示例情绪emoji
+                setTimeout(() => {
+                    const demoEmotions = ['😊', '😌', '🤔'];
+                    demoEmotions.forEach((emoji, index) => {
+                        setTimeout(() => addSpecificEmotionToJar(emoji), index * 300);
+                    });
+                }, 500);
+            }
+        }, 100);
+    };
+
+
+
+    // 生成情绪洞察
+    function generateEmotionInsights(emotionCounts, recentNotes, avgIntensity) {
+        const insights = [];
+        
+        // 最常见情绪
+        const sortedEmotions = Object.entries(emotionCounts)
+            .sort(([,a], [,b]) => b - a);
+        
+        if (sortedEmotions.length > 0) {
+            const [topEmotion, count] = sortedEmotions[0];
+            insights.push({
+                icon: '📊',
+                text: `最近一周您最常记录的情绪是 ${topEmotion}，共 ${count} 次`
+            });
+        }
+
+        // 强度分析
+        if (avgIntensity > 7) {
+            insights.push({
+                icon: '🔥',
+                text: `您的情绪强度较高（平均 ${avgIntensity}/10），建议适当放松`
+            });
+        } else if (avgIntensity < 4) {
+            insights.push({
+                icon: '🌱',
+                text: `您的情绪比较平和（平均 ${avgIntensity}/10），保持这种状态`
+            });
+        } else {
+            insights.push({
+                icon: '⚖️',
+                text: `您的情绪强度适中（平均 ${avgIntensity}/10），情绪管理良好`
+            });
+        }
+
+        // 记录频率
+        if (recentNotes.length >= 10) {
+            insights.push({
+                icon: '✨',
+                text: '您很好地保持了情绪记录的习惯，这有助于自我觉察'
+            });
+        } else if (recentNotes.length < 3) {
+            insights.push({
+                icon: '💡',
+                text: '建议更频繁地记录情绪，这能帮助您更好地了解自己'
+            });
+        }
+
+        // 情绪多样性
+        const emotionTypes = Object.keys(emotionCounts).length;
+        if (emotionTypes >= 5) {
+            insights.push({
+                icon: '🌈',
+                text: '您体验到了丰富的情绪类型，这表明您有很好的情绪觉察力'
+            });
+        }
+
+        return insights;
+    }
+
+    // 更新情绪总结模态框内容
+    function updateSummaryModalContent(data) {
+        const checklistContainer = document.getElementById('emotionSummaryChecklist');
+        if (!checklistContainer) return;
+        
+        // 生成简约的清单总结
+        const checklistHTML = `
+            <div class="checklist-item">
+                <div class="checklist-icon">📊</div>
+                <div class="checklist-content">
+                    <div class="checklist-title">情绪记录统计</div>
+                    <div class="checklist-desc">总记录: ${data.totalNotes} 条，近一周: ${data.recentNotes} 条</div>
+                    <div class="checklist-value">${data.totalNotes > 0 ? '已记录' : '待记录'}</div>
+                </div>
+            </div>
+            <div class="checklist-item">
+                <div class="checklist-icon">📈</div>
+                <div class="checklist-content">
+                    <div class="checklist-title">情绪强度分析</div>
+                    <div class="checklist-desc">平均强度: ${data.avgIntensity}/10</div>
+                    <div class="checklist-value">${data.avgIntensity > 0 ? '已分析' : '待分析'}</div>
+                </div>
+            </div>
+            <div class="checklist-item">
+                <div class="checklist-icon">📋</div>
+                <div class="checklist-content">
+                    <div class="checklist-title">情绪类型分布</div>
+                    <div class="checklist-desc">${Object.keys(data.emotionCounts).length} 种情绪类型</div>
+                    <div class="checklist-value">${Object.keys(data.emotionCounts).length > 0 ? '已统计' : '待统计'}</div>
+                </div>
+            </div>
+            <div class="checklist-item">
+                <div class="checklist-icon">💡</div>
+                <div class="checklist-content">
+                    <div class="checklist-title">AI智能洞察</div>
+                    <div class="checklist-desc">${data.insights.length} 条个性化建议</div>
+                    <div class="checklist-value">${data.insights.length > 0 ? '已生成' : '待生成'}</div>
+                </div>
+            </div>
+        `;
+        
+        checklistContainer.innerHTML = checklistHTML;
+    }
+
+
+
+    // 页面加载完成后设置事件监听器
+    window.addEventListener('load', function() {
+        setupEmotionSummaryEventListeners();
+    });
+
+    // 设置AI总结相关的事件监听器
+    function setupEmotionSummaryEventListeners() {
+        // AI总结按钮事件
+        const aiSummaryBtn = document.getElementById('aiSummaryBtn');
+        
+        if (aiSummaryBtn) {
+            aiSummaryBtn.addEventListener('click', generateAISummary);
+        }
+    }
+
+
 </script>
 </body>
 </html>

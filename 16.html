@@ -71,7 +71,7 @@
         .mobile-model-fallback {
             width: 280px;
             height: 380px;
-            border-radius: 20px;
+            border-radius: 0px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             box-shadow: 0 10px 30px rgba(102, 51, 153, 0.3);
@@ -82,13 +82,14 @@
             position: relative;
             margin: 0 auto;
             overflow: hidden;
+            top:-40px;
         }
 
         .mobile-model-image {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            border-radius: 20px;
+            border-radius: 0px;
         }
 
         /* 呼吸动画 */
@@ -896,16 +897,15 @@
 
         #live2d-container {
             width: 100%;
-            height: 100%;
+            height: 100vh;
             position: relative;
-            background: transparent;
+            background: #f0f0f0;
         }
         #live2d-canvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
     <!-- 引入 Cubism 3.0 SDK -->
@@ -1073,11 +1073,10 @@
             // 确保气泡默认可见
             const bubbleContainer = document.getElementById('bubbleContainer');
             bubbleContainer.classList.add('bubble-active');
-            
             // 不再仅因移动设备而跳过加载Live2D模型
             if (!isWebGLSupported()) {
                 console.log('WebGL不支持，启用备选方案');
-                document.getElementById('live2d-container').style.display = 'none';
+                document.getElementById('live2dContainer').style.display = 'none';
                 document.getElementById('loadingIndicator').style.display = 'none';
                 
                 // 显示备选模型
@@ -1094,6 +1093,17 @@
                 return;
             }
             
+            const dpr = window.devicePixelRatio || 1;
+            const app = new PIXI.Application({
+                view: document.getElementById("canvas"),
+                width: 280 * dpr,
+                height: 360 * dpr,
+                transparent: true,
+                antialias: true
+            });
+            app.view.style.width = "280px";
+            app.view.style.height = "360px";
+
             // 显示加载指示器
             document.getElementById('loadingIndicator').style.display = 'block';
             
@@ -1101,49 +1111,31 @@
             const loadTimeout = setTimeout(() => {
                 console.log('模型加载超时，启用备选方案');
                 document.getElementById('loadingIndicator').style.display = 'none';
-                document.getElementById('live2d-container').style.display = 'none';
+                document.getElementById('live2dContainer').style.display = 'none';
                 document.getElementById('mobileModelFallback').style.display = 'block';
                 document.getElementById('bubbleContainer').classList.add('bubble-active');
             }, 10000);
             
             try { 
-                // 初始化 Cubism Framework
-                const option = new PIXI.live2d.CubismFrameworkOptions();
-                option.logFunction = console.log;
-                option.errorFunction = console.error;
-                await PIXI.live2d.CubismFramework.startUp(option);
-                await PIXI.live2d.CubismFramework.initialize();
-
-                // 加载模型
-                const model = await PIXI.live2d.Live2DModel.from(cubism2Model, {
-                    autoInteract: false,
-                    motionPreload: 'NONE',
-                    idleMotionGroup: 'Idle'
-                });
-
-                // 清除超时
-                clearTimeout(loadTimeout);
-                document.getElementById('loadingIndicator').style.display = 'none';
-
-                // 调整模型大小和位置
-                const scale = 0.3;
-                model.scale.set(scale);
-                model.x = 140; // 容器宽度280的一半
-                model.y = 190; // 容器高度380的一半
-
-                // 创建PIXI应用
-                const app = new PIXI.Application({
-                    view: document.getElementById("live2d-canvas"),
-                    transparent: true,
-                    width: 280,
-                    height: 380
-                });
+                const model2 = await PIXI.live2d.Live2DModel.from(cubism2Model); 
+                clearTimeout(loadTimeout); // 清除超时
                 
-                // 添加到舞台
-                app.stage.addChild(model);
+                model2.anchor.set(0.5, 0.5); // 锚点保持在中心
 
+                // 调整模型位置，使其底部（桌子部分）与容器底部对齐
+                // 这需要一个经验性的向下偏移量，结合容器高度进行调整
+                const containerHeight = app.renderer.height; // 380px
+                // 估算将模型中心向下移动多少，才能让桌子底部在容器底部
+                // 这是一个尝试值，可能需要进一步微调
+                const manualDownwardOffset = 150; // 尝试向下偏移量
+                const targetY = containerHeight / 2 + manualDownwardOffset; // 从容器中心向下偏移
+
+                model2.position.set(app.renderer.width / 2, targetY); 
+                model2.scale.set(0.38 * dpr, 0.38 * dpr); // 保持缩放比例
+                app.stage.addChild(model2);
+                
                 // 获取Live2D容器元素
-                const live2dContainer = document.getElementById('live2d-container');
+                const live2dContainer = document.getElementById('live2dContainer');
                 const bubbleContainer = document.getElementById('bubbleContainer');
 
                 // 鼠标悬停事件
@@ -1174,6 +1166,8 @@
                      }, 50);
                  });
 
+                // 隐藏加载指示器
+                document.getElementById('loadingIndicator').style.display = 'none';
             } catch (error) {
                 clearTimeout(loadTimeout); // 清除超时
                 console.error('模型加载失败:', error);
@@ -1505,7 +1499,7 @@
                 const response = await fetch('https://api.coze.cn/v3/chat', {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer pat_L13Xn5ZvWCUCwryoatZnOwtphTxLznkOZqGoPluEO0DaKuBweZsmePpbvV5usTi2',
+                        'Authorization': 'Bearer pat_iAHE2PDuLdlHis0wCMglONWSowAltujnLjWDSDWKgGSPpm6SXKd8uTewmIWozsMw',
                         'Content-Type': 'application/json',
                         'Accept': 'text/event-stream'
                     },
@@ -1797,5 +1791,82 @@
             }, 1000);
         });
     </script>
+
+<script>
+    // 初始化 PIXI Application
+    const app = new PIXI.Application({
+        view: document.getElementById('live2d-canvas'),
+        transparent: true,
+        autoStart: true,
+        width: window.innerWidth,
+        height: window.innerHeight
+    });
+
+    // 设置全局变量
+    window.PIXI = PIXI;
+    window.Live2DCubismCore = Live2DCubismCore;
+
+    // 初始化 Cubism Framework
+    async function initCubism() {
+        const option = new Option();
+        option.logFunction = console.log;
+        option.errorFunction = console.error;
+        
+        // 初始化 Cubism Framework
+        await PIXI.live2d.CubismFramework.startUp(option);
+        await PIXI.live2d.CubismFramework.initialize();
+    }
+
+    // 加载模型
+    async function loadModel() {
+        try {
+            // 等待 Cubism Framework 初始化完成
+            await initCubism();
+
+            // 设置模型路径
+            const modelPath = '萨摩耶小狗/萨摩耶小狗.model3.json';
+            
+            // 创建模型
+            const model = await PIXI.live2d.Live2DModel.from(modelPath, {
+                autoInteract: false,
+                motionPreload: 'NONE',
+                idleMotionGroup: 'Idle'
+            });
+
+            // 调整模型大小和位置
+            const scale = 0.3;
+            model.scale.set(scale);
+            model.x = app.screen.width / 2-220;
+            model.y = app.screen.height / 2-300;
+
+            // 添加到舞台
+            app.stage.addChild(model);
+
+            // 启用交互
+            model.buttonMode = true;
+            model.interactive = true;
+            model.on('pointerdown', () => {
+                try {
+                    model.motion('TapBody');
+                } catch (e) {
+                    console.log('TapBody motion not found');
+                }
+            });
+
+            // 自动适应窗口大小
+            window.addEventListener('resize', () => {
+                app.renderer.resize(window.innerWidth, window.innerHeight);
+                model.x = app.screen.width / 2;
+                model.y = app.screen.height / 2;
+            });
+
+        } catch (error) {
+            console.error('模型加载失败:', error);
+        }
+    }
+
+    // 页面加载完成后加载模型
+    window.addEventListener('load', loadModel);
+</script>
 </body>
 </html>
